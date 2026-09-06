@@ -11,6 +11,7 @@ process.env.PORT = process.env.PORT || '3911';
 process.env.DATA_DIR = process.env.DATA_DIR || '.smoke-data';
 process.env.VERIFY_TOKEN = process.env.VERIFY_TOKEN || 'smoke-verify';
 process.env.TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN || 'smoke-tg-token';
+process.env.ADMIN_TOKEN = process.env.ADMIN_TOKEN || 'smoke-admin';
 
 const fs = require('fs');
 try { fs.rmSync(process.env.DATA_DIR, { recursive: true, force: true }); } catch (_) {}
@@ -104,7 +105,7 @@ async function chat(message, name) {
   //     legitimately routes to the market-calendar topic)
   r = await chat('who invented the rotary dial telephone?');
   check('unknown queued', r.engine === 'fallback' || r.engine === 'llm');
-  const admin = await (await fetch(`${base}/api/admin/unanswered`)).json();
+  const admin = await (await fetch(`${base}/api/admin/unanswered`, { headers: { 'x-admin-token': 'smoke-admin' } })).json();
   check('unanswered recorded', admin.unanswered.some((u) => /telephone/.test(u.text)));
 
   // 12. feedback
@@ -255,7 +256,159 @@ async function chat(message, name) {
   const market = await (await fetch(`${base}/market.html`)).text();
   check('marketplace page served', market.includes('AgriSphere'));
 
-  // 18. history persisted
+  // 23. P0 platform wiring — identity/OTP (R5), official price refs (R8),
+  //     ratings (R6), organisations (R10/R11), programme lifecycle (R7),
+  //     compliance pack (R9), alerts (R15), USSD (R2)
+  const hz = await (await fetch(`${base}/healthz`)).json();
+  check('healthz platform counters', hz.topics >= 70 && Array.isArray(hz.orgs) === false && typeof hz.backend === 'string', JSON.stringify(hz));
+
+  const otp = await (await fetch(`${base}/api/identity/otp`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ phone: '+26771234567' }),
+  })).json();
+  check('otp issued with dev code', otp.ok === true && /^\d{6}$/.test(otp.devOtp || ''));
+  const wrong = await (await fetch(`${base}/api/identity/verify`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ phone: '+26771234567', code: '000000' }),
+  })).json();
+  check('wrong otp rejected', wrong.error === 'wrong code');
+  const verified = await (await fetch(`${base}/api/identity/verify`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json', 'x-owner-id': 'farmer-1' },
+    body: JSON.stringify({ phone: '+26771234567', code: otp.devOtp }),
+  })).json();
+  check('otp verification ok', verified.ok === true && verified.verified === true);
+  const vstatus = await (await fetch(`${base}/api/identity/status`, { headers: { 'x-owner-id': 'farmer-1' } })).json();
+  check('identity status verified', vstatus.verified === true && vstatus.phone === '+26771234567', JSON.stringify(vstatus));
+  const vAnon = await (await fetch(`${base}/api/identity/status`, { headers: { 'x-owner-id': 'nobody' } })).json();
+  check('identity status unverified default', vAnon.verified === false);
+
+  const subscribed = await (await fetch(`${base}/api/alerts/subscribe`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ownerId: 'farmer-1', phone: '+26771234567', keyword: 'maize', channel: 'whatsapp' }),
+  })).json();
+  check('alert subscription', subscribed.alert && subscribed.alert.keyword === 'maize');
+  const noAdmPrice = await (await fetch(`${base}/api/prices/references`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ item: 'maize', price: 'P999', source: 'rumour' }),
+  })).json();
+  check('price reference blocked without admin', noAdmPrice.error === 'unauthorized');
+  const pref = await (await fetch(`${base}/api/prices/references`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-token': 'smoke-admin' },
+    body: JSON.stringify({ item: 'maize (white)', unit: '50kg bag', price: 'P190-P210', source: 'BAMB depot bulletin', area: 'Gaborone', date: '2026-09-02' }),
+  })).json();
+  check('price reference added by admin', !!pref.ref && pref.ref.source.includes('BAMB'));
+  const refs = await (await fetch(`${base}/api/prices/references`)).json();
+  check('price references listed + latest', refs.references.length === 1 && refs.latest.length === 1);
+  const alerts = await (await fetch(`${base}/api/alerts`, { headers: { 'x-owner-id': 'farmer-1' } })).json();
+  check('alerts list for owner', alerts.alerts.length === 1);
+
+  // lifecycle on the programme created above (owner buyer-1, farmer-1 applied)
+  const st = await (await fetch(`${base}/api/programs/${progId}/status`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json', 'x-owner-id': 'buyer-1' },
+    body: JSON.stringify({ status: 'contracting' }),
+  })).json();
+  check('programme status advance', st.ok === true && st.status === 'contracting');
+  const stDenied = await (await fetch(`${base}/api/programs/${progId}/status`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json', 'x-owner-id': 'intruder-2' },
+    body: JSON.stringify({ status: 'closed' }),
+  })).json();
+  check('programme status protected', stDenied.error === 'not allowed');
+  const ms = await (await fetch(`${base}/api/programs/${progId}/milestones/0`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json', 'x-owner-id': 'buyer-1' },
+    body: JSON.stringify({ done: true }),
+  })).json();
+  check('milestone completed', ms.ok === true && ms.milestone.status === 'done');
+  const batch = await (await fetch(`${base}/api/programs/${progId}/deliveries`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json', 'x-owner-id': 'buyer-1' },
+    body: JSON.stringify({ qty: '12', unit: 't', batchCode: 'PLP-2027-01', quality: 'grade A, dry', date: '2027-02-10' }),
+  })).json();
+  check('delivery batch recorded', batch.ok === true && batch.delivery.batchCode === 'PLP-2027-01');
+  const cpFarmer = await (await fetch(`${base}/api/programs/${progId}/compliance-pack?format=html`, { headers: { 'x-owner-id': 'farmer-1' } })).text();
+  check('compliance pack html for producer', cpFarmer.includes('<!DOCTYPE html>') && cpFarmer.includes('readiness pack') && cpFarmer.includes('PLP-2027-01'));
+  const cpDenied = await (await fetch(`${base}/api/programs/${progId}/compliance-pack`)).json();
+  check('compliance pack protected', /not allowed/.test(cpDenied.error || ''));
+  const disp = await (await fetch(`${base}/api/programs/${progId}/disputes`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json', 'x-owner-id': 'farmer-1' },
+    body: JSON.stringify({ text: 'weighbridge vs farm scale differs', by: 'Neo Farm', role: 'producer' }),
+  })).json();
+  check('dispute trail open', disp.ok === true && disp.dispute.status === 'open');
+  const detail = await (await fetch(`${base}/api/programs/${progId}`)).json();
+  check('programme detail lifecycle fields', detail.program.status === 'delivering' && detail.program.deliveriesCount === 1 && detail.program.openDisputes === 1 && detail.program.milestonesDone === 1, JSON.stringify(detail.program));
+  const dispDone = await (await fetch(`${base}/api/programs/${progId}/disputes/${disp.dispute.id}/resolve`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json', 'x-owner-id': 'buyer-1' },
+    body: JSON.stringify({ resolution: 'joint re-weigh agreed' }),
+  })).json();
+  check('dispute resolved', dispDone.ok === true);
+  const settl = await (await fetch(`${base}/api/programs/${progId}/settle`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json', 'x-owner-id': 'buyer-1' },
+    body: JSON.stringify({ amount: 'P18,240 net', method: 'direct deposit', reference: 'TXN-77' }),
+  })).json();
+  check('settlement recorded', settl.ok === true && settl.settlement.amount === 'P18,240 net');
+
+  const org = await (await fetch(`${base}/api/orgs/register`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json', 'x-owner-id': 'coop-1' },
+    body: JSON.stringify({ name: 'Mochudi Youth Co-op', type: 'coop', contact: 'Bame, +267 71 222 333', area: 'Kgatleng', description: '35 members, vegetables & poultry' }),
+  })).json();
+  check('org registration returns single-show key', !!org.apiKey && org.org.type === 'coop');
+  const orgBad = await (await fetch(`${base}/api/orgs/register`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json', 'x-owner-id': 'coop-2' },
+    body: JSON.stringify({ type: 'coop' }),
+  })).json();
+  check('org requires name+contact', !!orgBad.error);
+  const orgMine = await (await fetch(`${base}/api/orgs/mine`, { headers: { 'x-owner-id': 'coop-1' } })).json();
+  check('org mine', orgMine.org.name.includes('Mochudi'));
+  const orgVerified = await (await fetch(`${base}/api/orgs/${orgMine.org.id}/verify`, {
+    method: 'POST', headers: { 'x-admin-token': 'smoke-admin' },
+  })).json();
+  check('org admin verify', orgVerified.ok === true);
+  const orgAdminList = await (await fetch(`${base}/api/orgs`, { headers: { 'x-admin-token': 'smoke-admin' } })).json();
+  check('orgs admin list shows verified', orgAdminList.orgs.length === 1 && orgAdminList.orgs[0].verified === true);
+
+  const listing = await (await fetch(`${base}/api/marketplace/listings`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json', 'x-owner-id': 'coop-1' },
+    body: JSON.stringify({ category: 'produce', title: 'Co-op spinach bundles', description: 'picked daily', price: 'P8/bundle', location: 'Mochudi', contact: 'Bame' }),
+  })).json();
+  check('verified org listing', listing.listing.verified === true, JSON.stringify(listing));
+  const rating = await (await fetch(`${base}/api/ratings`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json', 'x-owner-id': 'farmer-1' },
+    body: JSON.stringify({ targetType: 'listing', targetId: listing.listing.id, byOwnerId: 'farmer-1', score: 4, comment: 'fresh & clean', role: 'buyer' }),
+  })).json();
+  check('rating posted', rating.ok === true);
+  const rated = await (await fetch(`${base}/api/ratings/listing/${listing.listing.id}`)).json();
+  check('rating aggregate visible', rated.aggregate && rated.aggregate.avg === 4 && rated.aggregate.count === 1, JSON.stringify(rated.aggregate));
+  const ratingBad = await (await fetch(`${base}/api/ratings`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json', 'x-owner-id': 'farmer-1' },
+    body: JSON.stringify({ targetType: 'listing', targetId: listing.listing.id, byOwnerId: 'farmer-1', score: 8 }),
+  })).json();
+  check('rating scale enforced', ratingBad.error.includes('1-5'));
+  const ratingRm = await (await fetch(`${base}/api/ratings/${rated.ratings[0].id}`, { method: 'DELETE', headers: { 'x-admin-token': 'smoke-admin' } })).json();
+  check('admin may remove abusive rating', ratingRm.ok === true);
+
+  const ussdMain = await (await fetch(`${base}/api/ussd`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ sessionId: 'smoke-ussd', phoneNumber: '+26770001111', text: '' }),
+  })).text();
+  check('ussd main menu', ussdMain.startsWith('CON AgriSphere'));
+  const ussdAsk = await (await fetch(`${base}/api/ussd`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ sessionId: 'smoke-ussd', phoneNumber: '+26770001111', text: '1' }),
+  })).text();
+  check('ussd ask entry', ussdAsk.startsWith('CON '));
+  const ussdQ = await (await fetch(`${base}/api/ussd`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ sessionId: 'smoke-ussd', phoneNumber: '+26770001111', text: 'how do i plant maize in botswana?' }),
+  })).text();
+  check('ussd brain answer', ussdQ.startsWith('END ') && /maize/i.test(ussdQ), ussdQ.slice(0, 90));
+  const ussdPrices = await (await fetch(`${base}/api/ussd`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ sessionId: 'smoke-ussd2', phoneNumber: '+26770001111', text: '2' }),
+  })).text();
+  check('ussd official prices via refs', /BAMB/.test(ussdPrices), ussdPrices.slice(0, 120));
+
+  const digest = await (await fetch(`${base}/api/notify/digest`)).json();
+  check('admin digest summary', /AgriSphere digest/.test(digest.digest));
+
+  // 24. history persisted
   const hist = await (await fetch(`${base}/api/history/${sid}`)).json();
   check('history stored', Array.isArray(hist.history) && hist.history.length >= 4, `len=${hist.history.length}`);
 

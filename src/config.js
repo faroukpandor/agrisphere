@@ -56,7 +56,7 @@ module.exports = {
   // Identity & OTP
   OTP_TTL_SECONDS: Number(env.OTP_TTL_SECONDS || 600),
   // If set, the dev-OTP is returned in API responses (never enable in production)
-  DEV_OTP: env.DEV_OTP || '',
+  DEV_OTP: env.DEV_OTP || (env.NODE_ENV !== 'production' && !env.SMS_PROVIDER_URL ? '1' : ''),
 
   // USSD (session length, gateway mode)
   USSD_SESSION_TTL: Number(env.USSD_SESSION_TTL || 900),

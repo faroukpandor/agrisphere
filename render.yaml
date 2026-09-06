@@ -1,0 +1,23 @@
+# Render Blueprint — optional. You can also create the service manually:
+#   New + → Web Service → repo → Build: (none) → Start: npm start
+services:
+  - type: web
+    name: agrisphere
+    runtime: node
+    repo: https://github.com/faroukpandor/agrisphere
+    plan: free
+    buildCommand: ""
+    startCommand: npm start
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # - key: ADMIN_TOKEN        # set secrets in the dashboard, not in this file
+      # - key: TEACH_TOKEN
+      # - key: OPENAI_API_KEY
+      # - key: WHATSAPP_TOKEN
+      # - key: WHATSAPP_PHONE_ID
+      # - key: FACEBOOK_PAGE_TOKEN
+      # - key: TELEGRAM_TOKEN
+      - key: VERIFY_TOKEN
+        generateValue: true

@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AgriSphere — Your Smart Farming Companion</title>
+  <meta name="description" content="AgriSphere: an automated, self-learning agricultural assistant for Web, WhatsApp, Facebook Messenger and Telegram. Crops, crop doctor, market prices, selling tips — powered by farmers like you." />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌍</text></svg>" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap header-inner">
+    <a class="brand" href="#top">
+      <span class="brand-logo">🌍🌱</span>
+      <span class="brand-name">AgriSphere</span>
+    </a>
+    <nav class="nav">
+      <a href="#features">Features</a>
+      <a href="#channels">Channels</a>
+      <a href="#chat">Chat now</a>
+      <a class="nav-gh" href="https://github.com/faroukpandor/agrisphere" target="_blank" rel="noopener">GitHub ↗</a>
+    </nav>
+  </div>
+</header>
+
+<section class="hero" id="top">
+  <div class="wrap hero-grid">
+    <div class="hero-copy">
+      <p class="eyebrow">🤖 Automated · Self-learning · Multi-channel</p>
+      <h1>Your smart farming companion, on every chat app.</h1>
+      <p class="lede">
+        Ask about crops, pests, market prices and selling — AgriSphere learns from every
+        farmer it talks to and answers on the <strong>Web, WhatsApp, Facebook Messenger and Telegram</strong> —
+        all sharing one memory.
+      </p>
+      <div class="hero-cta">
+        <a class="btn btn-primary" href="#chat">💬 Start chatting</a>
+        <a class="btn btn-ghost" href="#features">See what it knows</a>
+      </div>
+      <p class="hero-note">Built for Botswana farming 🇧🇼 — extension officers, BAMB &amp; DAR guidance.</p>
+    </div>
+    <div class="hero-card" aria-hidden="true">
+      <div class="bubble b1">🌽 How do I plant maize in dryland?</div>
+      <div class="bubble b2">Dumela! Plant with the rains, Nov–mid Jan… spacing 90 cm × 25–30 cm…</div>
+      <div class="bubble b3">🩺 My tomato leaves have holes…</div>
+      <div class="bubble b4">That could be Tuta absoluta — here's the IPM plan…</div>
+    </div>
+  </div>
+</section>
+
+<section class="feature-band" id="features">
+  <div class="wrap">
+    <h2>One assistant, five superpowers</h2>
+    <div class="cards">
+      <div class="card">
+        <span class="card-ico">🩺</span>
+        <h3>Crop Doctor</h3>
+        <p>Describe sick plants — yellowing, holes, spots, wilting — and get likely causes plus safe, practical controls.</p>
+      </div>
+      <div class="card">
+        <span class="card-ico">🌽</span>
+        <h3>Production guides</h3>
+        <p>Maize, sorghum, cowpeas, groundnuts, tomatoes, morogo &amp; more — planting, spacing, fertiliser, harvest.</p>
+      </div>
+      <div class="card">
+        <span class="card-ico">💰</span>
+        <h3>Prices &amp; markets</h3>
+        <p>BAMB depots, grading rules and where to check current weekly price bulletins — no invented numbers, ever.</p>
+      </div>
+      <div class="card">
+        <span class="card-ico">🧠</span>
+        <h3>Self-learning brain</h3>
+        <p>Teach it with <em>teach: question → answer</em>, rate replies 👍/👎 — it improves for every farmer.</p>
+      </div>
+      <div class="card">
+        <span class="card-ico">📱</span>
+        <h3>Every channel, one brain</h3>
+        <p>Web, WhatsApp, Messenger, Telegram. A lesson learned on WhatsApp is known on the website.</p>
+      </div>
+      <div class="card">
+        <span class="card-ico">🐄</span>
+        <h3>Livestock &amp; agribusiness</h3>
+        <p>Vaccination guidance, vet contacts, record keeping, funding channels (CEDA, NDB, Young Farmers Fund).</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="chat-section" id="chat">
+  <div class="wrap chat-wrap">
+    <div class="chat-head">
+      <div class="chat-title">
+        <span class="avatar">🤖</span>
+        <div>
+          <h2>AgriSphere Assistant</h2>
+          <p class="status"><span class="dot"></span> online · <span id="learnedCount">self-learning</span></p>
+        </div>
+      </div>
+      <div class="chat-tools">
+        <details class="teach-hint">
+          <summary>🧠 Teach me</summary>
+          <p>Type in the chat: <code>teach: your question → your answer</code><br/>I'll remember it for every farmer. Example:<br/>
+          <code>teach: price of cabbages at Gaborone? → about P25 per head at Main Mall, confirm locally</code></p>
+        </details>
+        <button id="resetBtn" class="btn-reset" title="Start a new conversation">↺ New</button>
+      </div>
+    </div>
+
+    <div id="messages" class="messages" aria-live="polite">
+      <div class="msg bot">
+        <div class="bubble">
+          Dumela! 👋 I'm <strong>AgriSphere</strong> — your farming companion.<br/><br/>
+          Ask me about 🌽 crops, 🩺 sick plants, 💰 prices or 🛒 selling — or tap a topic below.
+        </div>
+      </div>
+    </div>
+
+    <div id="suggestions" class="suggestions"></div>
+
+    <form id="chatForm" class="composer" autocomplete="off">
+      <input id="input" type="text" placeholder="Ask anything… e.g. “my maize has yellow stripes”" aria-label="Message AgriSphere" maxlength="600" />
+      <button id="sendBtn" class="btn-send" type="submit" aria-label="Send">➤</button>
+    </form>
+    <p class="chat-foot">I give general guidance only — always confirm with your local extension officer or agro-dealer. Open source under GPL-3.0.</p>
+  </div>
+</section>
+
+<section class="channels" id="channels">
+  <div class="wrap">
+    <h2>Where you can meet AgriSphere</h2>
+    <div class="chan-grid">
+      <div class="chan live"><span class="chan-ico">🌐</span><h3>Web</h3><p class="badge badge-live">● Live now</p><p>This page — try the chat above!</p></div>
+      <div class="chan"><span class="chan-ico">💬</span><h3>WhatsApp</h3><p class="badge">Adapter ready</p><p>Meta Cloud API — add tokens, verify, done.</p></div>
+      <div class="chan"><span class="chan-ico">📘</span><h3>Facebook Messenger</h3><p class="badge">Adapter ready</p><p>Page webhook + token, one-line deploy.</p></div>
+      <div class="chan"><span class="chan-ico">✈️</span><h3>Telegram</h3><p class="badge">Adapter ready</p><p>Bot API — quickest to switch on.</p></div>
+    </div>
+    <p class="channels-note">All channels share one self-learning memory. See the README → “Channels” to activate them on this deployment.</p>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <p>🌍🌱 <strong>AgriSphere</strong> — automated, self-learning agricultural assistant.</p>
+    <p class="fine">
+      Disclaimer: AgriSphere provides general agricultural guidance for information purposes and is not a substitute for
+      professional agronomic, veterinary or legal advice. Always consult the Ministry of Agriculture extension services,
+      DAR, BAMB or your veterinarian for decisions affecting your farm and family. Prices, programmes and regulations change.
+    </p>
+    <p class="fine">Licensed under <a href="https://github.com/faroukpandor/agrisphere/blob/main/LICENSE" target="_blank" rel="noopener">GPL-3.0</a> · <a href="https://github.com/faroukpandor/agrisphere" target="_blank" rel="noopener">github.com/faroukpandor/agrisphere</a></p>
+  </div>
+</footer>
+
+<script src="/app.js"></script>
+</body>
+</html>

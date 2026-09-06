@@ -1,0 +1,14 @@
+# Dependencies
+node_modules/
+
+# Runtime data (self-learning state lives here; it is regenerated at runtime)
+data/*.json
+!data/.gitkeep
+
+# Logs / OS noise
+*.log
+.DS_Store
+.env
+.env.*
+# smoke-test runtime dirs
+.smoke-data/

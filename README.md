@@ -38,8 +38,9 @@ One Health, digital tools, value chains & aggregation, nutrition-sensitive farmi
 
 Each topic lists the authoritative/peer-reviewed-style sources it is grounded in
 (FAO, CABI, WOAH, Codex, GlobalG.A.P., IPCC, Ramsar, IUCN, One Health, CCARDESA, national
-extension & veterinary services). See **docs/COMPLIANCE.md** for the full framework and
-**docs/MONETISATION.md** for the ethical income model.
+extension & veterinary services). See **docs/COMPLIANCE.md** for the full framework,
+**docs/MONETISATION.md** for the ethical income model,
+**docs/RESEARCH.md** for the global market intelligence and **docs/STRATEGY.md** for the remodelling roadmap.
 
 ---
 
@@ -126,6 +127,8 @@ src/experiences.js   agri-tourism catalogue logic
 src/bizplan.js       guided business-plan generator
 docs/COMPLIANCE.md   ethics, standards & compliance framework
 docs/MONETISATION.md recurring income & stakeholder-value playbook
+docs/RESEARCH.md     global/continental/regional/local market intelligence (with sources)
+docs/STRATEGY.md     remodelling & refactor blueprint, competitive scorecard, income architecture
 docs/templates/      contract/partner templates (MOU, tourism, SLA, premium terms)
 test/smoke.js        end-to-end assertions
 render.yaml          optional blueprint
@@ -140,6 +143,9 @@ Covers: health, UI shell, intents & KB routing across all domains (crops, crop-d
 production systems, NRM, standards, finance, ethics, people), teach/recall self-learning,
 unanswered queue, feedback, marketplace CRUD + report, PWA manifest/service-worker/icons,
 and webhook security for all three channels.
+
+## 📊 Market research & strategy
+Read the evidence: [docs/RESEARCH.md](docs/RESEARCH.md) (global → continental → SADC → Botswana: buyers, producers, competitors, brokers, gaps) and [docs/STRATEGY.md](docs/STRATEGY.md) (remodelling priorities, competitive scorecard, fair income architecture).
 
 ## 🤝 Stakeholders & income
 

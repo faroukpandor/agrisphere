@@ -166,6 +166,44 @@ module.exports = {
       },
       buttons: buttons(['🧠 How do you learn?', '🛡️ Honest trade', '💡 Business model']),
     },
+    {
+      id: 'bizplan-menu',
+      keys: ['business plan', 'business plan help', 'start my business', 'start an agribusiness', 'agribusiness plan', 'write my business plan', 'starter toolkit', 'plan my farm business', 'my business plan'],
+      answer() {
+        return '📋 START MY AGRI-BUSINESS — guided toolkit:\n\n' +
+          '• On the web app open the "Start here" page (or /biz.html): answer 10 quick questions about your enterprise, land, water, budget and buyers.\n' +
+          '• You get a DRAFT business plan: executive summary, production plan, market & buyer section, budget ranges, stepwise action plan and funding routes (CEDA, NDB, Young Farmers Fund...).\n' +
+          '• Why this beats static PDF sellers: your plan is built from YOUR answers, updates as you record real numbers, and the assistant keeps guiding each step — it is a living plan, not a one-off document.\n' +
+          '• Honesty: the draft is decision support, not a profit guarantee or financial advice — every figure must be verified with local quotes before you invest or borrow.\n\n' +
+          'Type "help" for the full menu, or ask me anything about your chosen enterprise.';
+      },
+      buttons: buttons(['💡 How is it different from PDF plans?', '📈 Agribusiness', '🤝 Finance']),
+    },
+    {
+      id: 'programs-menu',
+      keys: ['buyer-led production', 'buyer led programme', 'buyer led programmes', 'contract farming programmes', 'production programmes', 'sell to a buyer programme', 'buyer programmes', 'programme for farmers', 'programs for farmers'],
+      answer() {
+        return '🤝 BUYER-LED PRODUCTION PROGRAMMES:\n\n' +
+          '• Serious buyers (processors, exporters, supermarkets, feedlots, hotels, school feeding) can post structured demand programmes: product, volume, quality specs, price formula, advance/input terms and delivery window.\n' +
+          '• Farmers & co-ops apply directly; each programme carries a stage-gated production playbook (land prep → inputs → production → harvest → quality → delivery) and links to the topic guides the assistant teaches.\n' +
+          '• Fairness rules are enforced before any programme is listed: written transparent price formula, no unfair deductions, written advance/input terms, written payment timeline and a written contract.\n' +
+          '• On the web app open the "Buyer programmes" page (or /programs.html) to browse, apply or post a programme.\n\n' +
+          '⚠️ AgriSphere is the facilitator & document layer — contracts are between buyer and farmer, and we never handle money.';
+      },
+      buttons: buttons(['🌾 Marketplace', '📜 Contract farming basics', '🛡️ Honest trade']),
+    },
+    {
+      id: 'tourism-menu',
+      keys: ['agri tourism', 'agritourism', 'farm stay', 'farm stays', 'tourism experiences', 'farm tours', 'visit a farm', 'weekend farm', 'tourism'],
+      answer() {
+        return '🧭 AGRI-TOURISM EXPERIENCES:\n\n' +
+          '• Looking for a farm stay, market tour, harvest festival, birding or community craft experience? Tell the assistant where you want to go, your dates, group size and budget — we will guide you to curated experiences from participating partners.\n' +
+          '• On the web app open the "Agri-tourism" page (or /tourism.html): find experiences, see what is included, and contact the partner directly to book.\n' +
+          '• Partners (farm stays, lodges, community trusts) can list their experiences there too — the listing agreement template is in the repo (docs/templates).\n' +
+          '• AgriSphere is a listings & lead layer: bookings and payments are between you and the partner — always confirm access, weather and safety provisions before travelling.';
+      },
+      buttons: buttons(['🌾 Marketplace', '🛡️ Ethics', '💡 Business model']),
+    },
   ],
 
   entries: [

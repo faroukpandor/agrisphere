@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Start My Agri-Business — AgriSphere Guided Plan</title>
+  <meta name="description" content="Free guided agri-business plan toolkit: answer 10 questions and get a living draft plan with budget ranges, stepwise actions and funding routes — updated as you record real numbers." />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <meta name="theme-color" content="#14532d" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📋</text></svg>" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap header-inner">
+    <a class="brand" href="/">
+      <span class="brand-logo">🌍🌱</span>
+      <span class="brand-name">AgriSphere <small>Starter Toolkit</small></span>
+    </a>
+    <nav class="nav">
+      <a href="/programs.html">🤝 Buyer programmes</a>
+      <a href="/tourism.html">🧭 Agri-tourism</a>
+      <a href="/market.html">🌾 Marketplace</a>
+      <a href="/#chat">Chat</a>
+    </nav>
+  </div>
+</header>
+
+<section class="hero hero-short">
+  <div class="wrap hero-grid">
+    <div class="hero-copy">
+      <p class="eyebrow">📋 Free for starters · decision-support, not a PDF trap</p>
+      <h1>Start your agri-business with a plan that lives.</h1>
+      <p class="lede">
+        Answer 10 quick questions. Get a <strong>draft business plan built from your answers</strong> —
+        with budget ranges, a stepwise action plan and funding routes — then keep improving it
+        with real records as you farm. No paying for a static document that never updates.
+      </p>
+    </div>
+  </div>
+</section>
+
+<section class="chat-section">
+  <div class="wrap market-wrap">
+
+    <details class="post-card" id="formCard" open>
+      <summary class="post-summary">✍️ Build my draft plan (≈5 minutes)</summary>
+      <form id="bpForm" class="post-form">
+        <div class="frow">
+          <label>Your name <input id="fName" maxlength="60" placeholder="e.g. Neo" /></label>
+          <label>Location <input id="fLoc" maxlength="80" placeholder="Village / town / district" /></label>
+          <label>Enterprise <select id="fEnt" required></select></label>
+        </div>
+        <div class="frow">
+          <label>Land available (ha) — optional for intensive systems
+            <input id="fLand" type="number" min="0" step="0.1" placeholder="e.g. 2" /></label>
+          <label>Starting budget (Pula) — optional, use ranges later
+            <input id="fBudget" type="number" min="0" step="100" placeholder="e.g. 25000" /></label>
+        </div>
+        <label>Water source / plan
+          <input id="fWater" maxlength="120" placeholder="e.g. borehole + drip, or rainwater + municipal" /></label>
+        <label>Labour available
+          <input id="fLabour" maxlength="80" placeholder="e.g. family: 2 adults, 1 seasonal worker" /></label>
+        <label>When do you want to start?
+          <input id="fWindow" maxlength="80" placeholder="e.g. next rains (Nov), or as soon as funded" /></label>
+        <label>Who are your planned buyers / market? (be honest if unknown)
+          <textarea id="fMarket" rows="2" maxlength="300" placeholder="e.g. BAMB depot + local miller; or not yet researched"></textarea></label>
+        <div class="frow frow-actions">
+          <p class="fine">Your answers stay on your device &amp; the server only stores anonymous counts. Every figure in the plan is a range to verify with local quotes.</p>
+          <button class="btn btn-primary" type="submit" id="bpBtn">Generate my draft plan</button>
+        </div>
+        <p id="bpMsg" class="post-msg" role="status"></p>
+      </form>
+    </details>
+
+    <div id="planOut" aria-live="polite"></div>
+
+    <div class="compare">
+      <h3>Why this beats “business plan for sale” services</h3>
+      <table>
+        <thead><tr><th></th><th>Typical PDF-plan sellers</th><th>AgriSphere Starter Toolkit</th></tr></thead>
+        <tbody>
+          <tr><td>Built from your answers</td><td>Mostly a template with your name inserted</td><td>Every section generated from what you told us</td></tr>
+          <tr><td>After you pay</td><td>You get a PDF — that's the end</td><td>The assistant keeps guiding every step, free</td></tr>
+          <tr><td>Updates</td><td>Static; outdated in a season</td><td>Living plan — update with real records anytime</td></tr>
+          <tr><td>Honesty</td><td>Inflated projections to sell the document</td><td>Ranges + “verify locally”; no profit guarantees</td></tr>
+          <tr><td>Price</td><td>Often P500–P5,000+ one-off</td><td>Free draft; paid premium = human review &amp; bankable export</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <p>🌍🌱 <strong>AgriSphere Starter Toolkit</strong> — decision support, not financial or legal advice. <a href="/">← Back to the assistant</a></p>
+  </div>
+</footer>
+
+<script>
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
+</script>
+<script src="/biz.js"></script>
+</body>
+</html>

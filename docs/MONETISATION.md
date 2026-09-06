@@ -96,3 +96,14 @@ ethical, recurring revenue for the owner/orchestrator — and value for every st
 - PWA push notifications (marketplace alerts, early-warning weather/pest).
 - Marketplace categories → structured catalogue w/ photos & verification badges.
 - Multilingual UI (Setswana first).
+
+## 6. Track revenues (added with the three product lines)
+
+| Track | Asset built | Who pays | Mechanism |
+|---|---|---|---|
+| Starter toolkit | `/biz.html` guided plan generator + living plan loop | Individual starters (small) & funders/trainers (large) | Free draft; Premium human plan review & bankable export (see templates/STARTER-PREMIUM-TERMS.md); co-op/group plans; train-the-trainer programmes |
+| Buyer-led production | `/programs.html` structured programmes + playbooks + applications inbox | Buyers & programme operators | Fair-terms listing is free at launch to build liquidity; commercial tier later: featured programmes, application analytics, API orchestration; SLA template in docs/templates |
+| Agri-tourism | `/tourism.html` experience catalogue + trip finder | Partners (farm stays, lodges, trusts, DMOs) | Free listings at launch; later: featured placements, lead fees, destination marketing contracts; listing-agreement template in docs/templates |
+
+Sequencing: launch all three free (network effects), monetise commercial tiers once listings
+and usage prove value — the free core for farmers never changes.

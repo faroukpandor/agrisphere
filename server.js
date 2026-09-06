@@ -28,6 +28,9 @@ const channels = require('./src/channels');
 const brain = require('./src/brain');
 const KB = require('./src/knowledge');
 const marketplace = require('./src/marketplace');
+const programs = require('./src/programs');
+const experiences = require('./src/experiences');
+const bizplan = require('./src/bizplan');
 
 const app = express();
 app.disable('x-powered-by');
@@ -56,6 +59,9 @@ app.get('/healthz', (req, res) => {
     unanswered: store.unanswered.length,
     topics: KB.entries.length,
     marketplace: marketplace.stats().total,
+    programs: store.programs.length,
+    experiences: store.experiences.length,
+    bizplans: store.bizplans.length,
     ts: Date.now(),
   });
 });
@@ -201,6 +207,92 @@ app.post('/api/marketplace/listings/:id/report', (req, res) => {
   const r = marketplace.report(String(req.params.id));
   if (r.error) return fail(res, r.error);
   ok(res, r);
+});
+
+// ---------------------------------------------------------------------------
+// Buyer-led production programmes
+// ---------------------------------------------------------------------------
+app.get('/api/programs', (req, res) => {
+  ok(res, { programs: programs.listPrograms({ q: req.query.q }), fairTerms: programs.FAIR_TERMS });
+});
+
+app.get('/api/programs/:id', (req, res) => {
+  const p = programs.listPrograms({}).find((x) => x.id === String(req.params.id));
+  if (!p) return fail(res, 'programme not found', 404);
+  ok(res, { program: p, playbook: programs.playbookFor(p.product) });
+});
+
+app.post('/api/programs', (req, res) => {
+  const r = programs.createProgram({ ...(req.body || {}), ownerId: (req.body || {}).ownerId || req.headers['x-owner-id'] });
+  if (r.error) return fail(res, r.error, r.code || 400);
+  store.bump('programs.api.posts');
+  ok(res, r, 201);
+});
+
+app.post('/api/programs/:id/applications', (req, res) => {
+  const r = programs.applyToProgram(String(req.params.id), { ...(req.body || {}), ownerId: req.headers['x-owner-id'] });
+  if (r.error) return fail(res, r.error);
+  ok(res, r, 201);
+});
+
+app.get('/api/programs/:id/applications', (req, res) => {
+  const r = programs.programApplications(String(req.params.id), req.headers['x-owner-id'] || '', req.headers['x-admin-token'] || '');
+  if (r.error) return fail(res, r.error, r.code || 400);
+  ok(res, r);
+});
+
+app.delete('/api/programs/:id', (req, res) => {
+  const r = programs.removeProgram(String(req.params.id), req.headers['x-owner-id'] || '', req.headers['x-admin-token'] || '');
+  if (r.error) return fail(res, r.error, r.code || 400);
+  ok(res, r);
+});
+
+// ---------------------------------------------------------------------------
+// Agri-tourism experiences
+// ---------------------------------------------------------------------------
+app.get('/api/experiences', (req, res) => {
+  ok(res, {
+    experiences: experiences.listExperiences({ type: req.query.type, location: req.query.location, q: req.query.q }),
+    types: experiences.TYPES,
+  });
+});
+
+app.post('/api/experiences', (req, res) => {
+  const r = experiences.createExperience({ ...(req.body || {}), ownerId: (req.body || {}).ownerId || req.headers['x-owner-id'] });
+  if (r.error) return fail(res, r.error, r.code || 400);
+  store.bump('experiences.api.posts');
+  ok(res, r, 201);
+});
+
+app.delete('/api/experiences/:id', (req, res) => {
+  const r = experiences.removeExperience(String(req.params.id), req.headers['x-owner-id'] || '', req.headers['x-admin-token'] || '');
+  if (r.error) return fail(res, r.error, r.code || 400);
+  ok(res, r);
+});
+
+app.post('/api/experiences/:id/report', (req, res) => {
+  const r = experiences.reportExperience(String(req.params.id));
+  if (r.error) return fail(res, r.error);
+  ok(res, r);
+});
+
+// ---------------------------------------------------------------------------
+// Starter agri-business plan toolkit
+// ---------------------------------------------------------------------------
+app.get('/api/bizplan/enterprises', (req, res) => {
+  ok(res, { enterprises: bizplan.ENTERPRISE_OPTIONS.map((e) => ({ key: e.key, label: e.label })) });
+});
+
+app.post('/api/bizplan/generate', (req, res) => {
+  const b = req.body || {};
+  const plan = bizplan.buildPlan(b);
+  bizplan.savePlan(req.headers['x-session-id'] || b.sessionId, b, plan);
+  ok(res, {
+    name: plan.name,
+    enterprise: plan.enterprise,
+    disclaimer: 'Decision-support draft, not financial or legal advice. Verify every figure locally before investing.',
+    sections: plan.sections,
+  });
 });
 
 // ---------------------------------------------------------------------------

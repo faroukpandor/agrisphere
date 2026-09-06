@@ -116,6 +116,10 @@ function matchTrigger(text) {
       if ((tr.id === 'greet' || tr.id === 'thanks' || tr.id === 'bye') && t.startsWith(key + ' ')) {
         return tr;
       }
+      // 6: single strong topic words may head tourism-style router questions
+      if (tr.id === 'tourism-menu' && kw === 1 && key.length >= 7 && t.startsWith(key + ' ')) {
+        return tr;
+      }
     }
   }
   return null;

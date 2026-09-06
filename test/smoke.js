@@ -177,7 +177,70 @@ async function chat(message, name) {
   const rep = await (await fetch(`${base}/api/marketplace/listings/${post2.listing.id}/report`, { method: 'POST' })).json();
   check('marketplace report', rep.ok === true);
 
-  // 17. PWA assets
+  // 17. three tracks: triggers
+  r = await chat('I need to write my business plan');
+  check('starter trigger reachable', ['bizplan-menu', 'agribusiness'].includes(r.entryId), 'entry=' + r.entryId);
+  r = await chat('business plan');
+  check('business plan exact hits starter menu', r.entryId === 'bizplan-menu');
+  r = await chat('buyer led production programmes');
+  check('programmes trigger', r.entryId === 'programs-menu');
+  r = await chat('agri tourism experiences');
+  check('tourism trigger', r.entryId === 'tourism-menu');
+  r = await chat('agritourism experiences');
+  check('agritourism single-word routes', r.entryId === 'tourism-menu');
+
+  // 18. starter business plan generator
+  const bp = await (await fetch(`${base}/api/bizplan/generate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-session-id': sid },
+    body: JSON.stringify({ name: 'Testo', location: 'Mahalapye', enterprise: 'poultry', landHa: '', budget: '50000', water: 'borehole', market: 'local butchery + restaurants' }),
+  })).json();
+  check('bizplan generated', bp.enterprise.key === 'poultry' && bp.sections.length >= 5);
+  check('bizplan honest disclaimer', /not financial or legal advice/i.test(bp.disclaimer));
+  check('bizplan sections', bp.sections.some((s) => /Executive summary/.test(s.h)) && bp.sections.some((s) => /Funding routes/.test(s.h)));
+
+  // 19. buyer-led programmes CRUD + fair-terms gate + application inbox
+  const noFair = await (await fetch(`${base}/api/programs`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ orgName: 'Bad Buyer', title: 'cheap maize', product: 'maize', contact: '1' }),
+  })).json();
+  check('programme fair-terms gate', !!noFair.error && /fair-terms/i.test(noFair.error));
+  const prog = await (await fetch(`${base}/api/programs`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ orgName: 'Kgale Milling', title: '2027 maize demand', product: 'maize', volume: '40 t', qualitySpecs: 'moisture <=12.5%', priceFormula: 'BAMB week price + P150/t bonus', advancePct: '30% advance', deliveryWindow: 'Feb-Mar 2027', locations: 'Mahalapye/Palapye', contact: 'buyer@example.com', fairTerms: ['confirmed'], ownerId: 'buyer-1' }),
+  })).json();
+  check('programme created', !!prog.program && prog.program.applicationsCount === 0, JSON.stringify(prog));
+  const progId = prog.program.id;
+  const app = await (await fetch(`${base}/api/programs/${progId}/applications`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json', 'x-owner-id': 'farmer-1' },
+    body: JSON.stringify({ name: 'Neo Farm', location: 'Palapye', capacity: '10 ha maize', contact: '71111111' }),
+  })).json();
+  check('farmer applied', app.ok === true);
+  const inbox = await (await fetch(`${base}/api/programs/${progId}/applications`, { headers: { 'x-owner-id': 'buyer-1' } })).json();
+  check('buyer sees applications', inbox.applications.length === 1 && inbox.applications[0].name === 'Neo Farm');
+  const inboxDenied = await (await fetch(`${base}/api/programs/${progId}/applications`, { headers: { 'x-owner-id': 'intruder' } })).json();
+  check('applications protected', inboxDenied.error === 'not allowed');
+  const pb = await (await fetch(`${base}/api/programs/${progId}`)).json();
+  check('playbook for maize', pb.playbook.stages.length >= 5 && pb.playbook.stages[0][0].toLowerCase().includes('contract'));
+
+  // 20. agri-tourism experiences
+  const exp = await (await fetch(`${base}/api/experiences`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ partner: 'Morula Farm Stay', title: 'Weekend farm stay', type: 'farm-stay', location: 'Maun', priceRange: 'P850/night', contact: '72222222', ownerId: 'partner-1', description: 'milking demo, guided walk' }),
+  })).json();
+  check('experience created', !!exp.experience);
+  const exps = await (await fetch(`${base}/api/experiences?type=farm-stay&location=maun`)).json();
+  check('experience filter', exps.experiences.some((e) => e.partner === 'Morula Farm Stay'));
+  const expRep = await (await fetch(`${base}/api/experiences/${exp.experience.id}/report`, { method: 'POST' })).json();
+  check('experience report', expRep.ok === true);
+
+  // 21. track pages served
+  for (const page of ['/biz.html', '/programs.html', '/tourism.html', '/partner.html']) {
+    const pr = await fetch(base + page);
+    check('page ' + page, pr.status === 200 && (await pr.text()).includes('AgriSphere'));
+  }
+
+  // 22. PWA assets
   const manifest = await (await fetch(`${base}/manifest.webmanifest`)).json();
   check('manifest served', manifest.name && manifest.display === 'standalone' && manifest.icons.length >= 3);
   const sw = await (await fetch(`${base}/sw.js`)).text();

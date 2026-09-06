@@ -223,3 +223,43 @@ a { color: var(--green-700); }
   .frow-actions { flex-direction: column; align-items: stretch; }
   .listing-grid { grid-template-columns: 1fr; }
 }
+
+/* ---------- partner / tracks / new toolkit pages ---------- */
+.tracks { padding: 46px 0 10px; }
+.tracks h2 { text-align: center; font-size: clamp(1.4rem, 2.8vw, 1.9rem); color: var(--green-950); }
+.card-link { text-decoration: none; color: inherit; display: block; }
+.card-link:hover h3 { color: var(--green-600); }
+.card-link .card-ico { display: block; margin-bottom: .35rem; }
+
+.plan-card { border: 1px solid #e3efe6; border-radius: var(--radius); padding: 1.4rem 1.6rem; background: #fff; box-shadow: var(--shadow); margin-top: 18px; }
+.plan-card h2 { color: var(--green-900); font-size: 1.3rem; }
+.plan-card h3 { color: var(--green-800); font-size: 1.02rem; margin: 1rem 0 .35rem; border-left: 4px solid var(--green-500); padding-left: .6rem; }
+.plan-card ul { margin: .2rem 0 .6rem; padding-left: 1.2rem; }
+.plan-card li { margin-bottom: .3rem; font-size: .94rem; }
+.plan-head { border-bottom: 1px dashed #cfe6d4; padding-bottom: .8rem; margin-bottom: .4rem; }
+
+.compare { margin-top: 22px; border-top: 1px solid #e3efe6; padding-top: 14px; overflow-x: auto; }
+.compare h3 { color: var(--green-900); font-size: 1.05rem; }
+.compare table { width: 100%; border-collapse: collapse; font-size: .86rem; min-width: 520px; }
+.compare th, .compare td { border: 1px solid #e3efe6; padding: .5rem .6rem; text-align: left; vertical-align: top; }
+.compare th { background: var(--green-50); color: var(--green-900); }
+
+.fair-terms { background: var(--green-50); border: 1px solid #d7ecd9; border-radius: 12px; padding: .7rem .9rem; font-size: .9rem; }
+.fair-terms ul { margin: .3rem 0; padding-left: 1.2rem; }
+.checkrow { display: flex; gap: .5rem; align-items: flex-start; font-weight: 600 !important; color: var(--green-900); }
+.checkrow input { margin-top: .2rem; }
+
+.playbook { background: var(--green-50); border: 1px solid #d7ecd9; border-radius: 12px; padding: .6rem .9rem; margin-top: .5rem; font-size: .88rem; }
+.playbook ol { padding-left: 1.1rem; margin: .3rem 0; }
+.playbook li { margin-bottom: .25rem; }
+.applyform { border: 1px dashed #bcdcc3; border-radius: 12px; padding: .8rem; margin-top: .5rem; display: grid; gap: .4rem; }
+.applyform input, .applyform textarea { font: inherit; border: 1.5px solid #cfe6d4; border-radius: 8px; padding: .45rem .6rem; }
+.applyform h4 { margin: .1rem 0 .3rem; color: var(--green-900); }
+
+.app-row { border: 1px solid #e3efe6; border-radius: 10px; padding: .55rem .7rem; background: #fff; margin-bottom: .45rem; font-size: .9rem; }
+.chips { display: flex; flex-wrap: wrap; gap: .45rem; }
+.chip-on { background: var(--green-700) !important; color: #fff !important; border-color: var(--green-700) !important; }
+
+@media (max-width: 940px) {
+  .nav a:not(.nav-gh) { display: none; }
+}

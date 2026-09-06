@@ -121,3 +121,32 @@ no ads distorting advice**; sponsored topics are labelled; API licensing funds f
 - [ ] Emergency/reporting paths intact
 - [ ] Unanswered queue & feedback reviewed
 - [ ] README/COMPLIANCE updated if behaviour changed
+
+## 9. Product-line guardrails (buyer-led programmes · tourism · starter toolkit)
+
+**Buyer-led production programmes**
+1. AgriSphere is facilitator & document layer only — never a contracting party, never handling
+   money or holding margins.
+2. No programme is listed without passing the fair-terms checklist (transparent price formula,
+   no unfair deductions, written advance/input terms, written payment timeline, written contract).
+3. Programme playbooks are stage-gated and teach from the knowledge base; no programme may
+   pressure farmers past national laws (e.g. movement permits, pesticide rules).
+4. Suspected exploitative programmes are rejected/reported; farmers can always report a buyer.
+
+**Agri-tourism**
+1. Listings layer only: bookings & payments happen directly between guest and partner.
+2. Every listing must carry safety notes (access, weather, medical); platforms never guarantee
+   partner conduct; dangerous or misleading listings are removed.
+3. Partner listing agreements (docs/templates) govern conduct, fees and termination.
+4. Marketing arrangements (co-promotion, bundles) are written and labelled.
+
+**Starter toolkit**
+1. Generated plans are decision-support drafts with ranges — never profit guarantees, and never
+   financial or legal advice; disclaimers are embedded in every plan.
+2. Premium review adds human expertise but explicitly does not guarantee funding outcomes.
+3. Competitor framing stays factual (static PDF vs living process) — no disparagement.
+
+## 10. Template documents
+See `docs/templates/`: OFFTake-Programme-MOU, Tourism-Listing-Agreement, Service-Level-Agreement
+(Licensed Deployment & API), Starter-Premium-Terms. All are templates requiring professional
+review before execution.

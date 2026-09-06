@@ -51,6 +51,10 @@ extension & veterinary services). See **docs/COMPLIANCE.md** for the full framew
 | 🩺 **Crop Doctor** | Symptom triage: “my maize leaves have yellow stripes” → likely cause + IPM control + escalation |
 | 🚨 **Emergency & reporting** | People-first escalation (997/999/998), notifiable disease & wildlife protocols |
 | 🌾 **Community marketplace** | Free listings board — produce, livestock, inputs, machinery, services, land, jobs (`/market.html`) |
+| 📋 **Starter toolkit** | Guided plan generator (`/biz.html`): answers → draft business plan + budget ranges + action plan + funding routes — a living plan that beats static-PDF sellers |
+| 🤝 **Buyer-led programmes** | Structured demand programmes (`/programs.html`) with fair-terms gate, farmer applications inbox, stage-gated production playbooks |
+| 🧭 **Agri-tourism** | Partner experience catalogue + trip finder (`/tourism.html`): farm stays, market tours, festivals; listings & leads only — bookings with partners direct |
+| 🤝 **Partner tracks** | `/partner.html` + contract templates for buyer MOUs, tourism listings, licensed deployments & premium plan review (`docs/templates/`) |
 | 📱 **Multi-channel** | Web + PWA, WhatsApp, Messenger, Telegram webhooks on one Express app |
 | 🔌 **Provider-independent AI** | Deterministic retrieval by default; optional grounded LLM via any OpenAI-compatible API |
 | 📲 **PWA / offline** | Installable; service worker caches the shell; works on low bandwidth |
@@ -94,6 +98,9 @@ develop end-to-end before activating.
 | `/api/teach` | POST | programmatic lesson (token = `TEACH_TOKEN` if set) |
 | `/api/history/:session` | GET | conversation context |
 | `/api/marketplace/listings` | GET/POST | browse / post listings (delete + report by id) |
+| `/api/programs` · `/api/programs/:id/applications` | GET/POST | buyer-led programmes: browse, post (fair-terms gate), apply, owner inbox |
+| `/api/experiences` | GET/POST | agri-tourism catalogue: browse/filter, partner listings, report |
+| `/api/bizplan/enterprises` · `/api/bizplan/generate` | GET/POST | starter toolkit: enterprise list + guided plan generation |
 | `/api/admin/learned` · `/api/admin/unanswered` | GET | learning queue review (`ADMIN_TOKEN`) |
 | `/webhooks/{whatsapp,messenger}` | GET/POST | Meta verification + inbound |
 | `/webhooks/telegram/:secret` | POST | Telegram inbound |
@@ -102,7 +109,7 @@ develop end-to-end before activating.
 ## 🗂 Structure
 
 ```
-server.js            Express routes: chat, feedback, marketplace, webhooks, admin
+server.js            Express routes: chat, feedback, marketplace, programmes, tourism, bizplan, webhooks, admin
 src/config.js        env-driven config
 src/knowledge.js     merged knowledge core (triggers/entries + disclaimers)
 src/topics-a.js      production systems module
@@ -113,9 +120,13 @@ src/marketplace.js   listings board logic (30-day TTL, category model, reporting
 src/channels.js      WhatsApp/Messenger/Telegram adapters
 src/llm.js           optional grounded LLM (OpenAI-compatible, off by default)
 src/store.js         JSON persistence (sessions, learned, feedback, unanswered, listings, stats)
-public/              chat UI + marketplace + PWA (manifest, sw, icons)
+public/              chat UI + marketplace + starter/buyer/tourism/partner pages + PWA
+src/programs.js      buyer-led programme logic (fair-terms gate, playbooks)
+src/experiences.js   agri-tourism catalogue logic
+src/bizplan.js       guided business-plan generator
 docs/COMPLIANCE.md   ethics, standards & compliance framework
 docs/MONETISATION.md recurring income & stakeholder-value playbook
+docs/templates/      contract/partner templates (MOU, tourism, SLA, premium terms)
 test/smoke.js        end-to-end assertions
 render.yaml          optional blueprint
 ```

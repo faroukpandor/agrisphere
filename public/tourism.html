@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Agri-Tourism Experiences — AgriSphere</title>
+  <meta name="description" content="Find farm stays, market tours, harvest festivals, birding and community experiences across Botswana — curated agri-tourism from participating partners." />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <meta name="theme-color" content="#14532d" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧭</text></svg>" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap header-inner">
+    <a class="brand" href="/">
+      <span class="brand-logo">🌍🌱</span>
+      <span class="brand-name">AgriSphere <small>Agri-Tourism</small></span>
+    </a>
+    <nav class="nav">
+      <a href="/biz.html">📋 Start here</a>
+      <a href="/programs.html">🤝 Buyer programmes</a>
+      <a href="/market.html">🌾 Marketplace</a>
+      <a href="/#chat">Chat</a>
+    </nav>
+  </div>
+</header>
+
+<section class="hero hero-short">
+  <div class="wrap hero-grid">
+    <div class="hero-copy">
+      <p class="eyebrow">🧭 Rural &amp; farm experiences · partner-curated</p>
+      <h1>From city to the soil — plan your farm stay with a little help.</h1>
+      <p class="lede">
+        Tell us where you want to go and what you love — farm stays, food &amp; market tours,
+        harvest festivals, birding or community crafts — and we'll match you to
+        <strong>participating partner experiences</strong> with contact details to book directly.
+      </p>
+      <p class="hero-note">Listings &amp; leads only: bookings and payments are between you and the partner. Always confirm access, weather and safety before travelling.</p>
+    </div>
+  </div>
+</section>
+
+<section class="chat-section">
+  <div class="wrap market-wrap">
+
+    <details class="post-card" id="findBox" open>
+      <summary class="post-summary">🔎 Find my experience</summary>
+      <div class="post-form">
+        <div class="frow">
+          <label>Destination / area
+            <input id="tLoc" maxlength="80" placeholder="e.g. Maun, Gaborone, Francistown, Kasane, anywhere" /></label>
+          <label>When
+            <input id="tWhen" maxlength="80" placeholder="e.g. next weekend, August school holidays" /></label>
+          <label>Group size
+            <input id="tGroup" maxlength="80" placeholder="e.g. 2 adults + 2 kids" /></label>
+        </div>
+        <label>What do you love? (tick any)</label>
+        <div class="chips" id="typeChips"></div>
+        <div class="frow frow-actions">
+          <p class="fine">No payment happens here — we show you partners, you contact &amp; book with them directly.</p>
+          <button id="tSearch" class="btn btn-primary">Find experiences</button>
+        </div>
+      </div>
+    </details>
+
+    <div id="tripOut" aria-live="polite">
+      <div class="filter-row"><div></div><span id="tCount" class="count-badge"></span></div>
+      <div id="expGrid" class="listing-grid"><p class="loading">Loading experiences…</p></div>
+    </div>
+
+    <details class="post-card" id="partnerBox" style="margin-top:18px">
+      <summary class="post-summary">🏡 I am a partner — list my farm stay / tour / experience</summary>
+      <form id="expForm" class="post-form">
+        <div class="frow">
+          <label>Partner / business name * <input id="ePartner" required maxlength="90" placeholder="e.g. Morula Farm Stay" /></label>
+          <label>Experience title * <input id="eTitle" required maxlength="90" placeholder="e.g. Weekend farm stay with milking & morogo picking" /></label>
+        </div>
+        <div class="frow">
+          <label>Type <select id="eType"></select></label>
+          <label>Location * <input id="eLoc" required maxlength="80" placeholder="e.g. 12 km from Maun" /></label>
+          <label>Price range <input id="ePrice" maxlength="80" placeholder="e.g. P850/person/night" /></label>
+        </div>
+        <div class="frow">
+          <label>Duration <input id="eDur" maxlength="80" placeholder="e.g. 2 days / 1 night" /></label>
+          <label>Group size <input id="eGroup" maxlength="80" placeholder="e.g. 2–8 guests" /></label>
+          <label>Season <input id="eSeason" maxlength="120" placeholder="e.g. all year; best Apr–Sep" /></label>
+        </div>
+        <label>What's included
+          <textarea id="eIncluded" rows="2" maxlength="400" placeholder="e.g. meals, guided walk, milking demo, fire pit"></textarea></label>
+        <label>Description (safety notes too: access road, mobile coverage, medical distance)
+          <textarea id="eDesc" rows="3" maxlength="700" placeholder="Describe honestly — access, amenities, what guests experience, and any precautions."></textarea></label>
+        <label>Contact (phone/WhatsApp/email) * <input id="eContact" required maxlength="120" /></label>
+        <div class="frow frow-actions">
+          <p class="fine">Listings last 6 months. Guests contact you directly — AgriSphere never handles bookings or payments.</p>
+          <button class="btn btn-primary" type="submit">List experience</button>
+        </div>
+        <p id="expMsg" class="post-msg" role="status"></p>
+      </form>
+    </details>
+
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <p>🌍🌱 <strong>AgriSphere Agri-Tourism</strong> — safe, honest, local. <a href="/partner.html">Partners: list your experience →</a> · <a href="/">← Back to the assistant</a></p>
+  </div>
+</footer>
+
+<script>
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
+</script>
+<script src="/tourism.js"></script>
+</body>
+</html>

@@ -49,6 +49,12 @@ const STOPWORDS = new Set([
   'want', 'need', 'help', 'there', 'know', 'ask', 'give', 'advice', 'some',
   'any', 'this', 'that', 'from', 'am', 'be', 'been', 'not', 'just', 'too',
   'very', 'really', 'so', 'if', 'then', 'than', 'also', 'pls', 'plz', 'hey',
+  // filler words
+  'into', 'onto', 'near', 'around', 'through', 'start', 'stop', 'begin', 'more',
+  // domain-generic words (they appear in almost every topic and add noise;
+  // the specific noun/symptom carries the meaning)
+  'farm', 'farms', 'farming', 'farmer', 'farmers', 'crop', 'crops', 'grow',
+  'grows', 'growing', 'plant', 'plants', 'planting', 'raise', 'rearing',
 ]);
 
 function sigWords(s) {
@@ -60,16 +66,54 @@ function overlap(a, b) {
   return b.filter((w) => seen.has(w)).length;
 }
 
+// Light morphological similarity: "gullies"~"gully", "tomatoes"~"tomato",
+// "planting"~"plant". Deliberately strict for short words to avoid nonsense
+// matches ("cake"~"calendar" must never happen).
+function similar(a, b) {
+  if (!a || !b) return false;
+  if (a === b) return true;
+  const m = Math.min(a.length, b.length);
+  if (m < 4) return false;
+  // shared prefix must cover all but the last char of the shorter word,
+  // and at least 3 characters (guards tiny-word false positives)
+  let i = 0;
+  while (i < m && a[i] === b[i]) i++;
+  return i >= Math.max(3, m - 1);
+}
+
 // ---------------------------------------------------------------------------
-// Intent triggers (exact / phrase match first — cheap and reliable)
+// Intent triggers — conservative by design so real questions reach the
+// knowledge base. Rules:
+//   1. exact equality (a tapped button, e.g. "Crop doctor");
+//   2. "cmd" style: text starts with "/" + key (Telegram "/start");
+//   3. text starts with a multi-word key followed by at most two more words;
+//   4. 3+ word keys may appear anywhere in the sentence;
+//   5. greetings/thanks may lead the sentence (chatty openers).
 // ---------------------------------------------------------------------------
+// Single-word keys that still make sense at the end of a question.
+const TAIL_COMMAND_KEYS = new Set(['compliance', 'compliant', 'ethics', 'ethical', 'privacy', 'terms']);
+
 function matchTrigger(text) {
   const t = norm(text);
-  // handle punctuation variants like "hello!" already stripped by norm
+  if (!t) return null;
+  const tw = t.split(' ').length;
+
   for (const tr of KB.triggers) {
     for (const k of tr.keys) {
       const key = norm(k);
-      if (t === key || t.startsWith(key + ' ') || t.endsWith(' ' + key) || t.includes(' ' + key + ' ')) {
+      if (!key) continue;
+      const kw = key.split(' ').length;
+
+      if (t === key) return tr;                                  // 1
+      if (t.startsWith('/' + key)) return tr;                    // 2
+      if (t.startsWith(key + ' ')) {                             // 3
+        if (kw >= 2 && tw - kw <= 2) return tr;
+      }
+      if (kw >= 3 && (t.includes(' ' + key + ' ') || t.endsWith(' ' + key))) return tr; // 4
+      // command-like single words may appear at the end of the sentence
+      if (kw === 1 && TAIL_COMMAND_KEYS.has(key) && t.endsWith(' ' + key)) return tr;
+      // 5: chatty openers (greeting / thanks) may head the sentence
+      if ((tr.id === 'greet' || tr.id === 'thanks' || tr.id === 'bye') && t.startsWith(key + ' ')) {
         return tr;
       }
     }
@@ -91,29 +135,38 @@ const SYMPTOM_WORDS = new Set([
 
 const LIVESTOCK_WORDS = new Set([
   'cattle', 'goat', 'goats', 'sheep', 'chicken', 'chickens', 'poultry',
-  'livestock', 'cow', 'calf', 'beef', 'milk', 'veterinary', 'vet', 'dip',
-  'vaccination', 'vaccine', 'newcastle', 'anthrax', 'foot', 'mouth', 'fmd',
+  'livestock', 'cow', 'cows', 'calf', 'calves', 'beef', 'milk', 'dairy',
+  'veterinary', 'vet', 'dip', 'vaccination', 'vaccine', 'newcastle',
+  'anthrax', 'foot', 'mouth', 'fmd', 'pig', 'pigs', 'piggery', 'swine',
 ]);
 
-function scoreEntry(entry, sig, bigr, wordSet) {
+function scoreEntry(entry, sig, bigr) {
   const kw = sigWords(entry.keywords.join(' '));
   const qs = entry.questions.join(' ');
   const qBigr = bigrams(qs);
 
   let base = 0;
   let matched = 0;
-  const seen = new Set();
+  const matchedKws = new Set();
   for (const w of sig) {
     for (const k of kw) {
-      if (k.includes(w) && !seen.has(k)) { seen.add(k); matched++; }
+      const hits = k.includes(w) || w.includes(k) || similar(k, w);
+      if (hits && !matchedKws.has(k)) { matchedKws.add(k); matched++; }
     }
   }
   base += 1.5 * (matched / Math.max(3, kw.length));
 
-  const contained = sig.filter((w) => kw.some((k) => k === w));
+  const contained = sig.filter((w) => kw.some((k) => k === w || similar(k, w)));
   base += 1.0 * (contained.length / Math.max(1, sig.length));
 
-  const bigrHit = bigr.filter((b) => qBigr.includes(b)).length;
+  // bigram match with light plural-awareness: "dairy cows" ~ "dairy cow"
+  const bigrHit = bigr.filter((b) => {
+    const [w1, w2] = b.split(' ');
+    return qBigr.some((q) => {
+      const [q1, q2] = q.split(' ');
+      return (q1 === w1 || similar(q1, w1)) && (q2 === w2 || similar(q2, w2));
+    });
+  }).length;
   base += 0.7 * (bigrHit / Math.max(2, bigr.length));
 
   // category boosts
@@ -121,7 +174,7 @@ function scoreEntry(entry, sig, bigr, wordSet) {
     const sym = sig.filter((w) => SYMPTOM_WORDS.has(w)).length;
     if (sym > 0) base += 0.35 * Math.min(sym, 3);
   }
-  if (entry.category === 'livestock') {
+  if (entry.category === 'livestock' || entry.category === 'production') {
     const live = sig.filter((w) => LIVESTOCK_WORDS.has(w)).length;
     if (live > 0) base += 0.4 * Math.min(live, 3);
   }

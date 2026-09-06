@@ -28,11 +28,13 @@ class Store {
     this._ensureFile('learned.json', []);
     this._ensureFile('feedback.json', []);
     this._ensureFile('unanswered.json', []);
+    this._ensureFile('listings.json', []);
     this._ensureFile('sessions.json', {});
     this._ensureFile('stats.json', {});
     this.learned = this._load('learned.json', []);
     this.feedback = this._load('feedback.json', []);
     this.unanswered = this._load('unanswered.json', []);
+    this.listings = this._load('listings.json', []);
     this.sessions = this._load('sessions.json', {});
     this.stats = this._load('stats.json', {});
 
@@ -71,6 +73,7 @@ class Store {
       learned: this.learned,
       feedback: this.feedback,
       unanswered: this.unanswered,
+      listings: this.listings,
       sessions: this.sessions,
       stats: this.stats,
     })) {

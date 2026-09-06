@@ -5,6 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>AgriSphere — Your Smart Farming Companion</title>
   <meta name="description" content="AgriSphere: an automated, self-learning agricultural assistant for Web, WhatsApp, Facebook Messenger and Telegram. Crops, crop doctor, market prices, selling tips — powered by farmers like you." />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <meta name="theme-color" content="#14532d" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="apple-touch-icon" href="/icons/icon-192.png" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌍</text></svg>" />
   <link rel="stylesheet" href="/styles.css" />
 </head>
@@ -19,6 +24,7 @@
     <nav class="nav">
       <a href="#features">Features</a>
       <a href="#channels">Channels</a>
+      <a href="/market.html">🌾 Marketplace</a>
       <a href="#chat">Chat now</a>
       <a class="nav-gh" href="https://github.com/faroukpandor/agrisphere" target="_blank" rel="noopener">GitHub ↗</a>
     </nav>
@@ -39,7 +45,8 @@
         <a class="btn btn-primary" href="#chat">💬 Start chatting</a>
         <a class="btn btn-ghost" href="#features">See what it knows</a>
       </div>
-      <p class="hero-note">Built for Botswana farming 🇧🇼 — extension officers, BAMB &amp; DAR guidance.</p>
+      <p class="hero-note">Built for Botswana farming 🇧🇼 — extension officers, BAMB &amp; DAR guidance.
+        Installable as an app (PWA) · works on low-bandwidth connections.</p>
     </div>
     <div class="hero-card" aria-hidden="true">
       <div class="bubble b1">🌽 How do I plant maize in dryland?</div>
@@ -82,7 +89,22 @@
       <div class="card">
         <span class="card-ico">🐄</span>
         <h3>Livestock &amp; agribusiness</h3>
-        <p>Vaccination guidance, vet contacts, record keeping, funding channels (CEDA, NDB, Young Farmers Fund).</p>
+        <p>Poultry, small stock, pigs, fish, bees, dairy, feedlots — plus vaccination guidance, vet contacts and animal welfare standards.</p>
+      </div>
+      <div class="card">
+        <span class="card-ico">🌍</span>
+        <h3>Natural resources &amp; climate</h3>
+        <p>Soil, water, wetlands, forests, wildlife coexistence, pollinators and climate adaptation — farming that leaves land better.</p>
+      </div>
+      <div class="card">
+        <span class="card-ico">🌾</span>
+        <h3>Community marketplace</h3>
+        <p>Free board to list &amp; find produce, livestock, inputs, machinery, services, land and farm jobs — the village market, online.</p>
+      </div>
+      <div class="card">
+        <span class="card-ico">📜</span>
+        <h3>Standards &amp; honest trade</h3>
+        <p>Food safety, export &amp; certification pathways, fair finance options and universal ethical best practice — see our COMPLIANCE framework.</p>
       </div>
     </div>
   </div>
@@ -136,7 +158,7 @@
       <div class="chan"><span class="chan-ico">📘</span><h3>Facebook Messenger</h3><p class="badge">Adapter ready</p><p>Page webhook + token, one-line deploy.</p></div>
       <div class="chan"><span class="chan-ico">✈️</span><h3>Telegram</h3><p class="badge">Adapter ready</p><p>Bot API — quickest to switch on.</p></div>
     </div>
-    <p class="channels-note">All channels share one self-learning memory. See the README → “Channels” to activate them on this deployment.</p>
+    <p class="channels-note">All channels share one self-learning memory. The web app is also an installable PWA with a free community <a href="/market.html">marketplace</a>. See the README → “Channels” to activate WhatsApp/Messenger/Telegram on this deployment.</p>
   </div>
 </section>
 
@@ -148,10 +170,14 @@
       professional agronomic, veterinary or legal advice. Always consult the Ministry of Agriculture extension services,
       DAR, BAMB or your veterinarian for decisions affecting your farm and family. Prices, programmes and regulations change.
     </p>
-    <p class="fine">Licensed under <a href="https://github.com/faroukpandor/agrisphere/blob/main/LICENSE" target="_blank" rel="noopener">GPL-3.0</a> · <a href="https://github.com/faroukpandor/agrisphere" target="_blank" rel="noopener">github.com/faroukpandor/agrisphere</a></p>
+    <p class="fine"><a href="/market.html">🌾 Marketplace</a> · <a href="https://github.com/faroukpandor/agrisphere/blob/main/docs/COMPLIANCE.md" target="_blank" rel="noopener">Ethics &amp; compliance framework</a> · <a href="https://github.com/faroukpandor/agrisphere/blob/main/docs/MONETISATION.md" target="_blank" rel="noopener">Partner / API</a></p>
+    <p class="fine">Licensed under <a href="https://github.com/faroukpandor/agrisphere/blob/main/LICENSE" target="_blank" rel="noopener">GPL-3.0</a> · <a href="https://github.com/faroukpandor/agrisphere" target="_blank" rel="noopener">github.com/faroukpandor/agrisphere</a> · installable app — look for “Add to Home screen”</p>
   </div>
 </footer>
 
+<script>
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
+</script>
 <script src="/app.js"></script>
 </body>
 </html>

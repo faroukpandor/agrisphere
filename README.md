@@ -1,128 +1,144 @@
 # 🌍🌱 AgriSphere
 
-**AgriSphere** is an automated, **self-learning agricultural assistant** built for farmers and
-agripreneurs — available on the **Web**, **WhatsApp**, **Facebook Messenger** and **Telegram**,
-all sharing one brain and one memory.
+**Automated, self-learning agricultural assistant & community marketplace** for farmers,
+agripreneurs and the organisations that serve them — on the **Web (installable PWA)**,
+**WhatsApp**, **Facebook Messenger** and **Telegram**, all sharing one brain and one memory.
 
-It answers questions about crops (maize, sorghum, cowpeas, groundnuts, tomatoes, leafy
-vegetables…), acts as a **Crop Doctor** for pest & disease problems, points farmers to
-authoritative market-price sources (BAMB bulletins), and shares selling, livestock and
-agribusiness guidance — with honest, Botswana-flavoured, extension-service advice.
+AgriSphere is *provider-independent*: it runs on a deterministic, auditable retrieval engine
+with **no AI vendor required** (an optional OpenAI-compatible LLM mode can be enabled by the
+operator). It is built to international best practice & standards and universal ethics —
+non-religious, no Arabic — while respecting users' own values (e.g. interest-free finance,
+faith-based export certifications) where they choose them.
 
-> ⚠️ **Important:** AgriSphere gives general guidance, **never** fabricated prices or dosages,
-> and always directs serious problems to extension officers, DAR Sebele and veterinarians.
+> ⚠️ **Honesty rule:** AgriSphere never invents prices, dosages or regulations; serious
+> problems are always routed to extension officers, DAR Sebele, vets and emergency services.
 
 ---
 
-## ✨ What it does
+## What it covers (84 knowledge units today)
+
+**🌾 All agricultural production systems** — field crops (maize, sorghum, cowpeas,
+groundnuts, sunflower, sweet potato); horticulture (tomato, leafy veg/morogo, protected
+cultivation & hydroponics); livestock (cattle & vet basics, feedlots, dairy, goats/sheep,
+pigs, poultry); aquaculture (tilapia & catfish); beekeeping; agroforestry & fruit trees;
+conservation agriculture; rangeland & pastoral systems; urban/backyard production;
+integrated crop–livestock; oyster mushrooms.
+
+**🌍 Natural resource management systems** — soil health & erosion control; water,
+watersheds & borehole governance; wetlands & pans; forests & woodlands; wildlife
+coexistence; pollinators & biodiversity; climate adaptation; solar farm energy.
+
+**📜 Standards & markets** — food safety (Codex/HACCP-style GAP), export readiness &
+certification (GlobalG.A.P., organic, fair-trade, faith-based certification pathways),
+traceability, seed systems, post-harvest loss, BAMB marketing, honest trade ethics.
+
+**🤝 People & finance** — responsible farm finance (incl. interest-free/risk-sharing &
+mutual insurance options), cooperatives, women & youth, land tenure (FAO VGGT-aligned),
+One Health, digital tools, value chains & aggregation, nutrition-sensitive farming.
+
+Each topic lists the authoritative/peer-reviewed-style sources it is grounded in
+(FAO, CABI, WOAH, Codex, GlobalG.A.P., IPCC, Ramsar, IUCN, One Health, CCARDESA, national
+extension & veterinary services). See **docs/COMPLIANCE.md** for the full framework and
+**docs/MONETISATION.md** for the ethical income model.
+
+---
+
+## ✨ Features
 
 | Capability | How |
 |---|---|
-| 🧠 **Self-learning** | `teach: <question> → <answer>` stores a lesson permanently; 👍/👎 ratings and unanswered questions build a training queue for review. |
-| 🩺 **Crop Doctor** | Describe symptoms (“my maize leaves have yellow stripes”) → likely causes + practical IPM control. |
-| 🌽 **Production guides** | Planting, spacing, seed rates, fertiliser, harvest & storage for 19 topics. |
-| 💰 **Prices & markets** | Teaches the *method*: BAMB depot bulletins, grading, where to sell — no invented numbers. |
-| 📱 **Multi-channel** | One Express app serves the Web UI + webhooks for WhatsApp, Messenger, Telegram. |
-| 🔌 **Optional LLM mode** | Bring your own OpenAI-compatible key for grounded, knowledge-based replies (off by default). |
-| 🛠 **Zero external services** | No database required on the free tier — state persists to local JSON (swap in Redis on paid plans). |
-
----
+| 🧠 **Self-learning** | `teach: <question> → <answer>`; 👍/👎 ratings; unanswered-question learning queue with human review |
+| 🩺 **Crop Doctor** | Symptom triage: “my maize leaves have yellow stripes” → likely cause + IPM control + escalation |
+| 🚨 **Emergency & reporting** | People-first escalation (997/999/998), notifiable disease & wildlife protocols |
+| 🌾 **Community marketplace** | Free listings board — produce, livestock, inputs, machinery, services, land, jobs (`/market.html`) |
+| 📱 **Multi-channel** | Web + PWA, WhatsApp, Messenger, Telegram webhooks on one Express app |
+| 🔌 **Provider-independent AI** | Deterministic retrieval by default; optional grounded LLM via any OpenAI-compatible API |
+| 📲 **PWA / offline** | Installable; service worker caches the shell; works on low bandwidth |
+| 🔐 **Governed learning** | Admin endpoints for learned lessons, unanswered queue, feedback; token-protected |
+| 🛠 **Zero external services** | No database needed on free tier — JSON state; swap Redis on paid plans |
 
 ## 🚀 Deploy on Render (5 minutes)
 
-This repository is designed for a **Render Web Service**:
+1. Dashboard → **New + → Web Service** → connect `faroukpandor/agrisphere`.
+2. **Build:** empty · **Start:** `npm start` · Instance: Free (spins down after ~15 min idle, wakes on request).
+3. Optional env vars: `ADMIN_TOKEN`, `TEACH_TOKEN`, `VERIFY_TOKEN`, `OPENAI_API_KEY`,
+   `WHATSAPP_TOKEN`+`WHATSAPP_PHONE_ID`, `FACEBOOK_PAGE_TOKEN`, `TELEGRAM_TOKEN`.
+4. Deploy → open `/healthz` → expect `{"status":"ok", ...}`.
 
-1. **Dashboard** → **New +** → **Web Service** → connect the `faroukpandor/agrisphere` repo.
-2. Settings:
-   - **Build Command:** *(leave empty)* — there is nothing to compile.
-   - **Start Command:** `npm start`
-   - **Instance type:** Free (spins down after ~15 min idle; wakes on request).
-3. Add these **Environment Variables** (all optional except none — it runs with zero config):
-   | Variable | Purpose |
-   |---|---|
-   | `ADMIN_TOKEN` | Protect `/api/admin/*` endpoints. |
-   | `TEACH_TOKEN` | Protect the programmatic `/api/teach` endpoint. |
-   | `OPENAI_API_KEY` | Enable grounded LLM drafting (also `OPENAI_MODEL`, `OPENAI_BASE_URL`). |
-   | `VERIFY_TOKEN` | Webhook verify token for WhatsApp/Messenger (default exists — change it). |
-   | `WHATSAPP_TOKEN`, `WHATSAPP_PHONE_ID` | Activate WhatsApp outbound. |
-   | `FACEBOOK_PAGE_TOKEN` | Activate Messenger outbound. |
-   | `TELEGRAM_TOKEN` | Activate Telegram outbound. |
-4. **Deploy.** After the first successful deploy, open `https://<your-app>.onrender.com/healthz` — you should see JSON `{ "status": "ok", ... }`.
-
-> If an old service named `agrisphere-dnkb` exists on your dashboard with failed/no
-> deployments: click it, then **Settings → delete and redeploy**, or simply create a fresh
-> Web Service from the repo — the old hostname may keep failing until the service is
-> recreated (a hostname with no live instance behind it shows exactly the “site not
-> working” behaviour you saw).
+> If an old service (e.g. `agrisphere-dnkb`) exists with failed/no deployments, recreate the
+> service from the repo — a hostname with no live instance behind it shows the classic
+> “site not working” empty-reply behaviour.
 
 ### Local development
 
 ```bash
 npm install
-npm start          # → http://localhost:3000
-# or
-npm run dev        # auto-restart on changes (node --watch)
+npm start      # → http://localhost:3000  (chat UI + /market.html)
+npm test       # 30+ end-to-end assertions
 ```
 
-## 📱 Activating the chat channels
+## 📱 Channel activation
 
-The web chat is live automatically at the app URL. The three messenger adapters are already
-coded — they need one-time platform setup:
+- **Telegram (easiest):** BotFather → token env var → `setWebhook` to `/webhooks/telegram/<TOKEN>`.
+- **WhatsApp:** Meta Cloud API test number or verified business number → webhook `/webhooks/whatsapp`.
+- **Messenger:** Page + Meta app → token env var → subscribe → webhook `/webhooks/messenger`.
+Without tokens all channel webhooks run in safe “dev echo” mode (verify + log) so you can
+develop end-to-end before activating.
 
-### Telegram (easiest)
-1. Message [@BotFather](https://t.me/BotFather) → `/newbot` → get your `TELEGRAM_TOKEN`.
-2. Set `TELEGRAM_TOKEN` env var on Render and redeploy.
-3. Tell Telegram where your app lives:
-   `curl "https://api.telegram.org/bot<TOKEN>/setWebhook?url=https://<your-app>.onrender.com/webhooks/telegram/<TOKEN>"`
-4. Message your bot — it replies. 🎉
-
-### WhatsApp (Meta Cloud API)
-1. Go to developers.facebook.com → **WhatsApp** → create an app → get `WHATSAPP_PHONE_ID` (test number) + `WHATSAPP_TOKEN`.
-2. Set env vars + your service URL as the webhook: `https://<your-app>.onrender.com/webhooks/whatsapp`, verify token = `VERIFY_TOKEN`, subscribe to `messages`.
-3. A public phone number requires Meta **business verification** — until then the bot works with the test number in dev-echo mode.
-
-### Facebook Messenger
-1. Create a Facebook **Page** + **Meta app**, connect the Page, get `FACEBOOK_PAGE_TOKEN`.
-2. Set env var, then subscribe: `curl -X POST "https://graph.facebook.com/v21.0/me/subscribed_apps?access_token=<PAGE_TOKEN>&subscribed_fields=messages"`
-3. Webhook URL: `https://<your-app>.onrender.com/webhooks/messenger`, verify token = `VERIFY_TOKEN`.
-
-## 🧪 Test it
-
-```bash
-npm test     # runs test/smoke.js against a live local server
-```
-
-Manual: open the web UI → type `help`, then `teach: price of cabbages at Gaborone? → about P25 per head at Main Mall` and ask the same question again.
-
-## 🔌 API
+## 🔌 API surface
 
 | Route | Method | Purpose |
 |---|---|---|
-| `/api/chat` | POST | `{ message, sessionId?, name? }` → `{ reply, buttons, engine, recordId }` |
-| `/api/feedback` | POST | `{ recordId, good, comment? }` — training signal |
-| `/api/teach` | POST | `{ question, answer, token? }` (token = `TEACH_TOKEN` if set) |
-| `/api/admin/learned` | GET | All farmer-taught lessons (`ADMIN_TOKEN` header or `?token=`) |
-| `/api/admin/unanswered` | GET | The learning queue — questions the bot couldn't answer |
-| `/webhooks/whatsapp` | GET/POST | Meta Cloud API webhook |
-| `/webhooks/messenger` | GET/POST | Messenger webhook |
-| `/webhooks/telegram/:secret` | POST | Telegram webhook (`:secret` = your `TELEGRAM_TOKEN`) |
+| `/api/chat` | POST | `{ message, sessionId?, name? }` → reply, buttons, engine, recordId |
+| `/api/feedback` | POST | training signal `{ recordId, good }` |
+| `/api/teach` | POST | programmatic lesson (token = `TEACH_TOKEN` if set) |
+| `/api/history/:session` | GET | conversation context |
+| `/api/marketplace/listings` | GET/POST | browse / post listings (delete + report by id) |
+| `/api/admin/learned` · `/api/admin/unanswered` | GET | learning queue review (`ADMIN_TOKEN`) |
+| `/webhooks/{whatsapp,messenger}` | GET/POST | Meta verification + inbound |
+| `/webhooks/telegram/:secret` | POST | Telegram inbound |
+| `/healthz` | GET | status: engine, channels, topics, marketplace, learned |
 
-## 🗂 Project structure
+## 🗂 Structure
 
 ```
-server.js          Express app + routes + webhook wiring
-src/config.js      env-driven configuration
-src/store.js       JSON persistence (sessions, learned, feedback, unanswered, stats)
-src/knowledge.js   Seed knowledge base (19 topics, 14 intents) + content disclaimers
-src/brain.js       Retrieval engine: teach-priority → triggers → scored KB → fallback queue
-src/llm.js         Optional grounded LLM drafting (OpenAI-compatible)
-src/channels.js    Channel parsers/senders (web, WhatsApp, Messenger, Telegram)
-public/            Web chat UI (index.html, styles.css, app.js)
-test/smoke.js      End-to-end smoke tests
-data/              Runtime self-learning state (auto-created, git-ignored)
+server.js            Express routes: chat, feedback, marketplace, webhooks, admin
+src/config.js        env-driven config
+src/knowledge.js     merged knowledge core (triggers/entries + disclaimers)
+src/topics-a.js      production systems module
+src/topics-b.js      NRM + standards + finance/ethics + people + platform triggers
+src/topics-c.js      cattle systems, more crops, land, value chains
+src/brain.js         retrieval: teach → learned → triggers → scored KB → fallback queue
+src/marketplace.js   listings board logic (30-day TTL, category model, reporting)
+src/channels.js      WhatsApp/Messenger/Telegram adapters
+src/llm.js           optional grounded LLM (OpenAI-compatible, off by default)
+src/store.js         JSON persistence (sessions, learned, feedback, unanswered, listings, stats)
+public/              chat UI + marketplace + PWA (manifest, sw, icons)
+docs/COMPLIANCE.md   ethics, standards & compliance framework
+docs/MONETISATION.md recurring income & stakeholder-value playbook
+test/smoke.js        end-to-end assertions
+render.yaml          optional blueprint
 ```
+
+## 🧪 Test
+
+```bash
+npm test
+```
+Covers: health, UI shell, intents & KB routing across all domains (crops, crop-doctor,
+production systems, NRM, standards, finance, ethics, people), teach/recall self-learning,
+unanswered queue, feedback, marketplace CRUD + report, PWA manifest/service-worker/icons,
+and webhook security for all three channels.
+
+## 🤝 Stakeholders & income
+
+Free for farmers. Ethical revenue: licensed API/white-label chatbot services for
+organisations, verified marketplace storefronts, labelled sponsored topics, professional
+channel/certification services, anonymised market-signal reports, and development-programme
+partnerships — full playbook in **docs/MONETISATION.md**. Rules: no selling data, no
+pay-to-play answers, no ads that distort advice.
 
 ## 📄 License
 
-GPL-3.0 — see [LICENSE](LICENSE). Built for Botswana farmers 🇧🇼; contributions, new
-knowledge topics and extension-officer reviews are very welcome via GitHub issues/PRs.
+GPL-3.0. Built for Botswana farmers 🇧🇼 — contributions, knowledge topics and
+extension-officer reviews welcome via GitHub issues/PRs.

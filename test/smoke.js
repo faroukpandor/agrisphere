@@ -72,13 +72,40 @@ async function chat(message, name) {
   r = await chat('what is the phone number of Gaborone ARC?');
   check('learned recall', r.engine === 'learned' && /390 1234/.test(r.reply), JSON.stringify({ engine: r.engine }));
 
-  // 9. unknown → queued, not fabricated
+  // 9. extended domain coverage (production, NRM, standards, finance, people)
+  const routes = [
+    ['how to start a piggery', 'prod-pigs'],
+    ['how to start poultry farming', 'prod-poultry'],
+    ['beekeeping for honey income', 'prod-beekeeping'],
+    ['digging a fish pond for tilapia', 'prod-aquaculture'],
+    ['my field is eroding into gullies', 'nrm-soil'],
+    ['can i farm near wetlands', 'nrm-wetlands'],
+    ['elephants keep raiding my crops', 'nrm-wildlife'],
+    ['how do i export vegetables', 'quality-export'],
+    ['how to stop post harvest losses', 'quality-postharvest'],
+    ['interest free finance for farmers', 'finance-responsible'],
+    ['should we start a cooperative', 'people-coops'],
+    ['what are the five freedoms', 'welfare-animals'],
+    ['how do i look after dairy cows', 'cattle-dairy'],
+  ];
+  for (const [q, want] of routes) {
+    r = await chat(q);
+    check(`route: ${q} → ${want}`, r.entryId === want && r.engine === 'local', JSON.stringify({ got: r.entryId }));
+  }
+
+  // 10. platform transparency triggers
+  r = await chat('how does agrisphere make money?');
+  check('monetisation trigger', r.entryId === 'monetisation');
+  r = await chat('is agrisphere compliant with ethics?');
+  check('compliance trigger', r.entryId === 'compliance');
+
+  // 11. unknown → queued, not fabricated
   r = await chat('what is the lunar planting calendar for kgatleng?');
   check('unknown queued', r.engine === 'fallback' || r.engine === 'llm');
   const admin = await (await fetch(`${base}/api/admin/unanswered`)).json();
   check('unanswered recorded', admin.unanswered.some((u) => /lunar/.test(u.text)));
 
-  // 10. feedback
+  // 12. feedback
   const fb = await (await fetch(`${base}/api/feedback`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -125,7 +152,45 @@ async function chat(message, name) {
   });
   check('telegram wrong secret rejected', tgBad.status === 403);
 
-  // 15. history persisted
+  // 16. marketplace CRUD + reporting
+  const post1 = await (await fetch(`${base}/api/marketplace/listings`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ category: 'produce', title: '2 t maize grade A', price: 'P3,100/t', location: 'Mahalapye', contact: '71234567', ownerId: 'owner-1' }),
+  })).json();
+  check('marketplace create', post1.listing && post1.listing.id, JSON.stringify(post1));
+  const ml = await (await fetch(`${base}/api/marketplace/listings?category=produce`)).json();
+  check('marketplace list', ml.listings.length >= 1 && ml.listings[0].title.includes('maize'));
+  const del = await (await fetch(`${base}/api/marketplace/listings/${post1.listing.id}`, {
+    method: 'DELETE', headers: { 'x-owner-id': 'owner-1' },
+  })).json();
+  check('marketplace delete (owner)', del.ok === true);
+  const post2 = await (await fetch(`${base}/api/marketplace/listings`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ category: 'services', title: 'spraying service', contact: '70000000', ownerId: 'owner-2' }),
+  })).json();
+  const delDenied = await (await fetch(`${base}/api/marketplace/listings/${post2.listing.id}`, {
+    method: 'DELETE', headers: { 'x-owner-id': 'owner-1' },
+  })).json();
+  check('marketplace delete denied to others', delDenied.error === 'not allowed');
+  const rep = await (await fetch(`${base}/api/marketplace/listings/${post2.listing.id}/report`, { method: 'POST' })).json();
+  check('marketplace report', rep.ok === true);
+
+  // 17. PWA assets
+  const manifest = await (await fetch(`${base}/manifest.webmanifest`)).json();
+  check('manifest served', manifest.name && manifest.display === 'standalone' && manifest.icons.length >= 3);
+  const sw = await (await fetch(`${base}/sw.js`)).text();
+  check('service worker served', sw.includes('agrisphere-v1'));
+  for (const icon of ['/icons/icon-192.png', '/icons/icon-512.png', '/icons/icon-64.png']) {
+    const ir = await fetch(base + icon);
+    const ib = Buffer.from(await ir.arrayBuffer());
+    check('icon png ' + icon, ir.status === 200 && ib[0] === 0x89 && ib[1] === 0x50);
+  }
+  const market = await (await fetch(`${base}/market.html`)).text();
+  check('marketplace page served', market.includes('AgriSphere'));
+
+  // 18. history persisted
   const hist = await (await fetch(`${base}/api/history/${sid}`)).json();
   check('history stored', Array.isArray(hist.history) && hist.history.length >= 4, `len=${hist.history.length}`);
 

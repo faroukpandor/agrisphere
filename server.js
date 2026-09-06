@@ -27,6 +27,7 @@ const store = require('./src/store');
 const channels = require('./src/channels');
 const brain = require('./src/brain');
 const KB = require('./src/knowledge');
+const marketplace = require('./src/marketplace');
 
 const app = express();
 app.disable('x-powered-by');
@@ -53,6 +54,8 @@ app.get('/healthz', (req, res) => {
     },
     learned: store.listLearned().length,
     unanswered: store.unanswered.length,
+    topics: KB.entries.length,
+    marketplace: marketplace.stats().total,
     ts: Date.now(),
   });
 });
@@ -154,6 +157,50 @@ app.get('/api/admin/learned', adminGuard, (req, res) => {
 
 app.get('/api/admin/unanswered', adminGuard, (req, res) => {
   ok(res, { unanswered: store.unanswered });
+});
+
+// ---------------------------------------------------------------------------
+// Community marketplace (stakeholder value engine — free listings board)
+// ---------------------------------------------------------------------------
+app.get('/api/marketplace/listings', (req, res) => {
+  const { category, q } = req.query;
+  ok(res, {
+    listings: marketplace.list({ category, q }),
+    categories: marketplace.CATEGORIES,
+    stats: marketplace.stats(),
+  });
+});
+
+app.post('/api/marketplace/listings', (req, res) => {
+  const b = req.body || {};
+  const r = marketplace.create({
+    category: b.category,
+    title: b.title,
+    description: b.description,
+    price: b.price,
+    location: b.location,
+    contact: b.contact,
+    ownerId: b.ownerId || req.headers['x-owner-id'],
+  });
+  if (r.error) return fail(res, r.error, r.code || 400);
+  store.bump('marketplace.api.posts');
+  ok(res, r, 201);
+});
+
+app.delete('/api/marketplace/listings/:id', (req, res) => {
+  const r = marketplace.remove(
+    String(req.params.id),
+    req.headers['x-owner-id'] || '',
+    req.headers['x-admin-token'] || ''
+  );
+  if (r.error) return fail(res, r.error, r.code || 400);
+  ok(res, r);
+});
+
+app.post('/api/marketplace/listings/:id/report', (req, res) => {
+  const r = marketplace.report(String(req.params.id));
+  if (r.error) return fail(res, r.error);
+  ok(res, r);
 });
 
 // ---------------------------------------------------------------------------

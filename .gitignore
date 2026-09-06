@@ -11,4 +11,4 @@ data/*.json
 .env
 .env.*
 # smoke-test runtime dirs
-.smoke-data/
+.smoke-data*/

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Marketplace — AgriSphere Community Board</title>
+  <meta name="description" content="AgriSphere community marketplace: list and find produce, livestock, inputs, machinery, services, land and farm jobs." />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <meta name="theme-color" content="#14532d" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌾</text></svg>" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap header-inner">
+    <a class="brand" href="/">
+      <span class="brand-logo">🌍🌱</span>
+      <span class="brand-name">AgriSphere <small>Marketplace</small></span>
+    </a>
+    <nav class="nav">
+      <a href="/#chat">Chat</a>
+      <a href="/#features">Features</a>
+      <a class="nav-gh" href="https://github.com/faroukpandor/agrisphere" target="_blank" rel="noopener">GitHub ↗</a>
+    </nav>
+  </div>
+</header>
+
+<section class="hero hero-short">
+  <div class="wrap hero-grid">
+    <div class="hero-copy">
+      <p class="eyebrow">🤝 Community board · free · noticeboard only</p>
+      <h1>The village market, online.</h1>
+      <p class="lede">
+        List your produce, livestock, inputs, machinery, services, land or farm jobs —
+        and find buyers &amp; sellers near you. <strong>Free forever for farmers.</strong>
+        AgriSphere is a noticeboard, never a trader.
+      </p>
+    </div>
+  </div>
+</section>
+
+<section class="chat-section" id="market">
+  <div class="wrap market-wrap">
+
+    <details class="post-card" id="postFormBox">
+      <summary class="post-summary">➕ Post a new listing</summary>
+      <form id="postForm" class="post-form" autocomplete="off">
+        <div class="frow">
+          <label>Category
+            <select id="fCat">
+              <option value="produce">🌽 Produce (grain, veg, fruit, eggs, milk…)</option>
+              <option value="livestock">🐄 Livestock (cattle, goats, poultry, fish…)</option>
+              <option value="inputs">🧪 Inputs (seed, fertiliser, feed, chemicals…)</option>
+              <option value="machinery">🚜 Machinery &amp; tools (sales &amp; hire)</option>
+              <option value="services">🧑‍🌾 Services (spraying, transport, vet, agronomy…)</option>
+              <option value="land">🗺️ Land &amp; water (fields, grazing, boreholes)</option>
+              <option value="jobs">💼 Farm jobs (wanted / offered)</option>
+              <option value="other">📦 Other</option>
+            </select>
+          </label>
+          <label>Title *
+            <input id="fTitle" required maxlength="90" placeholder="e.g. 2 tonnes quality maize, BAMB grade" />
+          </label>
+        </div>
+        <label>Description
+          <textarea id="fDesc" rows="2" maxlength="600" placeholder="Details: quantity, quality/grade, harvest date… Be honest — trust is the currency here."></textarea>
+        </label>
+        <div class="frow">
+          <label>Price (optional)
+            <input id="fPrice" maxlength="60" placeholder="e.g. P3,200/tonne or negotiable" />
+          </label>
+          <label>Location
+            <input id="fLoc" maxlength="80" placeholder="e.g. Letlhakane (delivery available)" />
+          </label>
+          <label>Contact *
+            <input id="fContact" required maxlength="120" placeholder="Phone / WhatsApp number" />
+          </label>
+        </div>
+        <div class="frow frow-actions">
+          <p class="fine">Listings expire after 30 days. Deals are between you and the other party — meet in public places and verify before paying.</p>
+          <button class="btn btn-primary" type="submit" id="postBtn">Post listing</button>
+        </div>
+        <p id="postMsg" class="post-msg" role="status"></p>
+      </form>
+    </details>
+
+    <div class="filter-row">
+      <div>
+        <label for="catSel">Filter</label>
+        <select id="catSel">
+          <option value="">All categories</option>
+        </select>
+        <input id="searchQ" type="search" placeholder="Search listings…" />
+        <button id="searchBtn" class="btn btn-ghost-dark">Search</button>
+      </div>
+      <span id="countBadge" class="count-badge"></span>
+    </div>
+
+    <div id="listings" class="listing-grid" aria-live="polite">
+      <p class="loading">Loading listings…</p>
+    </div>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <p>🌍🌱 <strong>AgriSphere Marketplace</strong> — a free community board. We never handle payments.</p>
+    <p class="fine">Post honestly, deal safely, and report anything suspicious — it keeps the market fair for everyone. <a href="/">← Back to the AgriSphere chat</a></p>
+  </div>
+</footer>
+
+<script>
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
+</script>
+<script src="/market.js"></script>
+</body>
+</html>

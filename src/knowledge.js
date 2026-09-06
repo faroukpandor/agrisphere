@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * AgriSphere seed knowledge base.
+ * AgriSphere knowledge base.
  *
  * Content principles:
  *   - Honest, practical, Botswana-flavoured (BAMB price bulletins, Sebele,
@@ -9,10 +9,19 @@
  *     substitute for a local agronomist / vet / extension officer.
  *   - No fabricated market prices or chemical brand names — we teach users
  *     how to get authoritative numbers instead.
+ *   - Grounded in international best practice & standards (FAO, CABI, WOAH,
+ *     Codex, GlobalG.A.P., IPCC, One Health, FAO VGGT) — see COMPLIANCE.md.
  *
- * Each entry: { id, title, category, keywords[], questions[], answer|fn }
- * The brain also learns new Q&A pairs at runtime (stored separately).
+ * Structure: core entries + merged extension modules (production systems,
+ * natural resource management, quality/standards/export, finance/ethics,
+ * people/cooperatives, value chains).
  */
+
+// Extended topic modules (all agricultural production systems + all natural
+// resource management systems + standards, finance, ethics & people topics).
+const topicsA = require('./topics-a'); // production systems
+const topicsB = require('./topics-b'); // NRM + standards + finance + ethics + people
+const topicsC = require('./topics-c'); // cattle systems, more crops, land, value chains
 
 const DISCLAIMER =
   '⚠️ This is general guidance, not a substitute for a professional ' +
@@ -527,3 +536,13 @@ module.exports = {
     },
   ],
 };
+
+// ---- Merge extension modules (all production systems, NRM, standards,
+// ---- finance/ethics, people topics) into the single knowledge base ----
+module.exports.triggers = (module.exports.triggers || []).concat(
+  topicsA.triggers || [], topicsB.triggers || [], topicsC.triggers || []
+);
+module.exports.entries = (module.exports.entries || []).concat(
+  topicsA.entries || [], topicsB.entries || [], topicsC.entries || []
+);
+module.exports.moduleCount = 4;

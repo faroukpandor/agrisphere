@@ -48,6 +48,32 @@ module.exports = {
   TEACH_TOKEN: env.TEACH_TOKEN || '',
   ADMIN_TOKEN: env.ADMIN_TOKEN || '',
 
-  // Persistence (free-tier friendly: local JSON; bring your own disk/Redis later)
+  // Persistence: json (default, zero-dependency) or sqlite (node:sqlite; falls
+  // back to json automatically if unavailable)
   DATA_DIR: env.DATA_DIR || 'data',
+  DATA_BACKEND: env.DATA_BACKEND || 'json',
+
+  // Identity & OTP
+  OTP_TTL_SECONDS: Number(env.OTP_TTL_SECONDS || 600),
+  // If set, the dev-OTP is returned in API responses (never enable in production)
+  DEV_OTP: env.DEV_OTP || '',
+
+  // USSD (session length, gateway mode)
+  USSD_SESSION_TTL: Number(env.USSD_SESSION_TTL || 900),
+
+  // Notification bus (outbound channels; empty = console/dev log only)
+  SMS_PROVIDER_URL: env.SMS_PROVIDER_URL || '',
+  SMS_PROVIDER_KEY: env.SMS_PROVIDER_KEY || '',
+  EMAIL_FROM: env.EMAIL_FROM || '',
+
+  // Payment-document layer: PSP hooks are integration placeholders only —
+  // AgriSphere never handles money itself. Licensed PSP partner fills these.
+  PSP_NAME: env.PSP_NAME || '',
+  PSP_WEBHOOK_SECRET: env.PSP_WEBHOOK_SECRET || '',
+
+  // Organisation API keys
+  ORG_KEY_TTL_DAYS: Number(env.ORG_KEY_TTL_DAYS || 365),
+
+  // Language
+  DEFAULT_LANG: env.DEFAULT_LANG || 'en',
 };

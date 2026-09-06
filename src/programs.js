@@ -63,7 +63,13 @@ function visible(p, includeApplications = false) {
     fairTerms: p.fairTerms,
     createdAt: p.createdAt,
     expiresAt: p.expiresAt,
+    status: p.status || 'open',
     applicationsCount: (p.applications || []).length,
+    milestonesDone: (p.milestones || []).filter((m) => m.status === 'done').length,
+    milestonesTotal: (p.milestones || []).length,
+    deliveriesCount: (p.deliveries || []).length,
+    openDisputes: (p.disputes || []).filter((d) => d.status === 'open').length,
+    settlement: p.settlement || null,
   };
   if (includeApplications) v.applications = p.applications || [];
   return v;
@@ -116,6 +122,14 @@ function createProgram(body) {
     contact: contact,
     fairTerms: FAIR_TERMS,
     applications: [],
+    status: 'open',
+    milestones: playbookFor(product).stages.map(([stage, note], i) => ({
+      idx: i, stage, note, status: 'pending', at: null,
+    })),
+    deliveries: [],
+    disputes: [],
+    settlement: null,
+    flags: 0,
     createdAt: Date.now(),
     expiresAt: Date.now() + TTL_MS,
   };
@@ -142,6 +156,7 @@ function applyToProgram(id, body) {
   p.applications.push({
     id: crypto.randomUUID(),
     farmerId,
+    verified: !!store.getSession(farmerId).verified,
     name: name,
     location: clean(body.location, 120),
     capacity,
@@ -211,4 +226,124 @@ function playbookFor(product) {
   return { stages: pb.stages, kb: pb.kb, note: 'Stage-gated checklist — ask the assistant to teach any stage (e.g. "maize harvest and storage").' };
 }
 
-module.exports = { FAIR_TERMS, listPrograms, createProgram, applyToProgram, programApplications, removeProgram, playbookFor };
+const STATUSES = ['open', 'contracting', 'in-production', 'delivering', 'settled', 'closed'];
+
+function canManage(program, requesterId, adminToken) {
+  const isAdmin = config.ADMIN_TOKEN && adminToken === config.ADMIN_TOKEN;
+  return isAdmin || program.ownerId === String(requesterId || '');
+}
+
+function updateStatus(id, status, requesterId, adminToken) {
+  const p = store.programs.find((x) => x.id === id);
+  if (!p) return { error: 'programme not found' };
+  if (!canManage(p, requesterId, adminToken)) return { error: 'not allowed', code: 403 };
+  if (!STATUSES.includes(status)) return { error: 'invalid status' };
+  p.status = status;
+  p.statusAt = Date.now();
+  store._scheduleFlush();
+  store.bump('programs.status.' + status);
+  return { ok: true, status };
+}
+
+function setMilestone(id, idx, done, requesterId, adminToken) {
+  const p = store.programs.find((x) => x.id === id);
+  if (!p) return { error: 'programme not found' };
+  if (!canManage(p, requesterId, adminToken)) return { error: 'not allowed', code: 403 };
+  const m = (p.milestones || []).find((x) => x.idx === Number(idx));
+  if (!m) return { error: 'milestone not found' };
+  m.status = done ? 'done' : 'pending';
+  m.at = Date.now();
+  store._scheduleFlush();
+  store.bump(done ? 'programs.milestones.done' : 'programs.milestones.reopened');
+  return { ok: true, milestone: m };
+}
+
+function addDelivery(id, body, requesterId, adminToken) {
+  const p = store.programs.find((x) => x.id === id);
+  if (!p) return { error: 'programme not found' };
+  if (!canManage(p, requesterId, adminToken)) return { error: 'not allowed', code: 403 };
+  const clean = (v, max) => String(v || '').trim().slice(0, max);
+  const qty = clean(body.qty, 40);
+  if (!qty) return { error: 'qty is required' };
+  const d = {
+    id: crypto.randomUUID(),
+    date: clean(body.date, 20) || new Date().toISOString().slice(0, 10),
+    qty,
+    unit: clean(body.unit, 20),
+    quality: clean(body.quality, 200),
+    batchCode: clean(body.batchCode, 60),
+    notes: clean(body.notes, 300),
+    addedBy: clean(requesterId, 60),
+    at: Date.now(),
+  };
+  p.deliveries = p.deliveries || [];
+  p.deliveries.push(d);
+  if (p.status === 'open' || p.status === 'contracting' || p.status === 'in-production') p.status = 'delivering';
+  store._scheduleFlush();
+  store.bump('programs.deliveries');
+  return { ok: true, delivery: d };
+}
+
+function addDispute(id, body, requesterId) {
+  const p = store.programs.find((x) => x.id === id);
+  if (!p) return { error: 'programme not found' };
+  const text = String(body.text || '').trim().slice(0, 500);
+  if (!text) return { error: 'dispute text is required' };
+  p.disputes = p.disputes || [];
+  const d = {
+    id: crypto.randomUUID(),
+    by: String(body.by || requesterId || 'unknown').slice(0, 60),
+    role: String(body.role || '').slice(0, 20),
+    text,
+    status: 'open',
+    at: Date.now(),
+  };
+  p.disputes.push(d);
+  store._scheduleFlush();
+  store.bump('programs.disputes');
+  return { ok: true, dispute: d };
+}
+
+function resolveDispute(id, disputeId, resolution, requesterId, adminToken) {
+  const p = store.programs.find((x) => x.id === id);
+  if (!p) return { error: 'programme not found' };
+  const d = (p.disputes || []).find((x) => x.id === disputeId);
+  if (!d) return { error: 'dispute not found' };
+  const isAdmin = config.ADMIN_TOKEN && adminToken === config.ADMIN_TOKEN;
+  if (!isAdmin && p.ownerId !== String(requesterId || '')) return { error: 'not allowed', code: 403 };
+  d.status = 'resolved';
+  d.resolution = String(resolution || '').trim().slice(0, 500);
+  d.resolvedAt = Date.now();
+  store._scheduleFlush();
+  store.bump('programs.disputes.resolved');
+  return { ok: true };
+}
+
+function settleProgram(id, body, requesterId, adminToken) {
+  const p = store.programs.find((x) => x.id === id);
+  if (!p) return { error: 'programme not found' };
+  if (!canManage(p, requesterId, adminToken)) return { error: 'not allowed', code: 403 };
+  p.settlement = {
+    amount: String(body.amount || '').trim().slice(0, 60),
+    method: String(body.method || 'agreed between parties').trim().slice(0, 120),
+    date: String(body.date || '').trim().slice(0, 30) || new Date().toISOString().slice(0, 10),
+    reference: String(body.reference || '').trim().slice(0, 80),
+    at: Date.now(),
+  };
+  p.status = 'settled';
+  store._scheduleFlush();
+  store.bump('programs.settled');
+  return { ok: true, settlement: p.settlement };
+}
+
+function detail(id) {
+  prune();
+  const p = store.programs.find((x) => x.id === id);
+  return p ? { program: visible(p, true), playbook: playbookFor(p.product) } : null;
+}
+
+module.exports = {
+  FAIR_TERMS, STATUSES, listPrograms, createProgram, applyToProgram,
+  programApplications, removeProgram, playbookFor, updateStatus, setMilestone,
+  addDelivery, addDispute, resolveDispute, settleProgram, detail,
+};

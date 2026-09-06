@@ -15,6 +15,7 @@
 const crypto = require('crypto');
 const store = require('./store');
 const config = require('./config');
+const ratings = require('./ratings');
 
 const CATEGORIES = [
   'produce',    // grain, vegetables, fruit, eggs, milk...
@@ -55,8 +56,11 @@ function visible(listing) {
     location: listing.location,
     contact: listing.contact,
     ownerId: listing.ownerId,
+    verified: listing.verified || false,
+    verifiedBy: listing.verifiedBy || '',
     createdAt: listing.createdAt,
     expiresAt: listing.expiresAt,
+    rating: ratings.aggregateFor('listing', listing.id),
   };
 }
 
@@ -87,6 +91,8 @@ function create({ category, title, description, price, location, contact, ownerI
   const con = sanitize(contact, 120);
   if (!con) return { error: 'a contact method is required' };
   const owner = String(ownerId || '').slice(0, 80) || crypto.randomUUID();
+  const profile = store.getSession(owner);
+  const org = store.orgs.find((o) => o.ownerId === owner);
 
   const owned = store.listings.filter((l) => l.ownerId === owner).length;
   if (owned >= MAX_LISTINGS_PER_OWNER) {
@@ -102,6 +108,8 @@ function create({ category, title, description, price, location, contact, ownerI
     location: loc,
     contact: con,
     ownerId: owner,
+    verified: !!profile.verified || !!(org && org.verified),
+    verifiedBy: profile.verified ? 'phone' : (org && org.verified ? 'org:' + org.name.slice(0, 30) : ''),
     createdAt: Date.now(),
     expiresAt: Date.now() + LISTING_TTL_MS,
   };

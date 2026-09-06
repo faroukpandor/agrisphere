@@ -99,11 +99,13 @@ async function chat(message, name) {
   r = await chat('is agrisphere compliant with ethics?');
   check('compliance trigger', r.entryId === 'compliance');
 
-  // 11. unknown → queued, not fabricated
-  r = await chat('what is the lunar planting calendar for kgatleng?');
+  // 11. unknown → queued, not fabricated (phrase chosen to stay outside the
+  //     growing knowledge base; the old 'lunar planting calendar' phrase now
+  //     legitimately routes to the market-calendar topic)
+  r = await chat('who invented the rotary dial telephone?');
   check('unknown queued', r.engine === 'fallback' || r.engine === 'llm');
   const admin = await (await fetch(`${base}/api/admin/unanswered`)).json();
-  check('unanswered recorded', admin.unanswered.some((u) => /lunar/.test(u.text)));
+  check('unanswered recorded', admin.unanswered.some((u) => /telephone/.test(u.text)));
 
   // 12. feedback
   const fb = await (await fetch(`${base}/api/feedback`, {

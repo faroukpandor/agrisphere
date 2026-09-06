@@ -14,9 +14,16 @@
  */
 
 const KB = require('./knowledge');
+const topicsD = require('./topics-d');
 const store = require('./store');
 const config = require('./config');
 const llm = require('./llm');
+const i18n = require('./i18n');
+
+// Aggregated corpus: core knowledge + market-research module D + platform
+// triggers (identity/prices/orgs/alerts/compliance/USSD menus).
+const ALL_TRIGGERS = KB.triggers.concat(topicsD.triggers);
+const ALL_ENTRIES = KB.entries.concat(topicsD.entries);
 
 // ---------------------------------------------------------------------------
 // Text utilities
@@ -91,14 +98,14 @@ function similar(a, b) {
 //   5. greetings/thanks may lead the sentence (chatty openers).
 // ---------------------------------------------------------------------------
 // Single-word keys that still make sense at the end of a question.
-const TAIL_COMMAND_KEYS = new Set(['compliance', 'compliant', 'ethics', 'ethical', 'privacy', 'terms']);
+const TAIL_COMMAND_KEYS = new Set(['compliance', 'compliant', 'ethics', 'ethical', 'privacy', 'terms', 'prices', 'alerts', 'ussd', 'insure']);
 
 function matchTrigger(text) {
   const t = norm(text);
   if (!t) return null;
   const tw = t.split(' ').length;
 
-  for (const tr of KB.triggers) {
+  for (const tr of ALL_TRIGGERS) {
     for (const k of tr.keys) {
       const key = norm(k);
       if (!key) continue;
@@ -110,8 +117,8 @@ function matchTrigger(text) {
         if (kw >= 2 && tw - kw <= 2) return tr;
       }
       if (kw >= 3 && (t.includes(' ' + key + ' ') || t.endsWith(' ' + key))) return tr; // 4
-      // command-like single words may appear at the end of the sentence
-      if (kw === 1 && TAIL_COMMAND_KEYS.has(key) && t.endsWith(' ' + key)) return tr;
+      // command-like single words may appear alone or at the end of the sentence
+      if (kw === 1 && TAIL_COMMAND_KEYS.has(key) && (t === key || t.endsWith(' ' + key))) return tr;
       // 5: chatty openers (greeting / thanks) may head the sentence
       if ((tr.id === 'greet' || tr.id === 'thanks' || tr.id === 'bye') && t.startsWith(key + ' ')) {
         return tr;
@@ -249,6 +256,37 @@ async function processMessage(rawText, ctx, session) {
     };
   }
 
+  // 0) Setswana (i18n v1): detect language; map known nouns straight to a
+  //    knowledge topic so a Setswana question gets the right English core.
+  let tnMode = false;
+  try {
+    tnMode = i18n.detectLang(text) === 'tn';
+  } catch (_) { /* i18n must never break the brain */ }
+  if (tnMode) {
+    store.bump('tn.msgs');
+    const tnId = i18n.tnTopic(normText);
+    if (tnId) {
+      const tnEntry = ALL_ENTRIES.find((e) => e.id === tnId);
+      if (tnEntry) {
+        store.bump(`answers.tn.${tnId}`);
+        const tnAns = typeof tnEntry.answer === 'function' ? tnEntry.answer(ctx) : tnEntry.answer;
+        return {
+          text: i18n.phrase('tn', 'wrapper') + '\n\n' + tnAns,
+          buttons: tnEntry.buttons || simpleButtons(['Help']),
+          meta: { engine: 'local', entryId: tnId, confident: true, lang: 'tn' },
+        };
+      }
+    }
+    if (/(dumela|ke a leboga|tsamaya sentle|aowa|^ee$| ee )/.test(normText)) {
+      return {
+        text: i18n.phrase('tn', 'greeting') + '\n' + i18n.phrase('tn', 'welcome') + '\n\n' +
+          i18n.phrase('tn', 'wrapper') + '\n\nSetswana v1: try "mabele", "dikgomo", "dikoko" or "pula le lefatshe" — or ask fully in English for depth.',
+        buttons: simpleButtons(['Help']),
+        meta: { engine: 'local', entryId: 'tn-greet', confident: false, lang: 'tn' },
+      };
+    }
+  }
+
   // 1) TEACH directive — permanent self-learning
   const lesson = stripTeachDirective(text);
   if (lesson) {
@@ -290,7 +328,7 @@ async function processMessage(rawText, ctx, session) {
   const bigr = bigrams(text);
   let best = null;
   if (sig.length > 0) {
-    for (const entry of KB.entries) {
+    for (const entry of ALL_ENTRIES) {
       const r = scoreEntry(entry, sig, bigr, new Set(sig));
       if (!best || r.score > best.score) best = r;
     }
@@ -299,7 +337,7 @@ async function processMessage(rawText, ctx, session) {
   const threshold = config.MATCH_THRESHOLD;
   if (best && best.score >= threshold && best.matched >= 1) {
     store.bump(`answers.kb.${best.entry.category}`);
-    const entry = KB.entries.find((e) => e.id === best.entry.id);
+    const entry = ALL_ENTRIES.find((e) => e.id === best.entry.id);
     const answer = typeof entry.answer === 'function' ? entry.answer(ctx) : entry.answer;
     return {
       text: answer,
@@ -325,7 +363,11 @@ async function processMessage(rawText, ctx, session) {
     '• Rephrase with a crop name + symptom, e.g. "maize yellow leaves" or "tomato holes"\n' +
     '• Ask for "help" to browse topics\n' +
     '• Teach me yourself! Type: teach: <question> → <answer>\n' +
-    `\n📚 I currently know ${KB.entries.length} topics + ${learnedCount} lessons taught by farmers like you.`;
+    `\n📚 I currently know ${ALL_ENTRIES.length} topics + ${learnedCount} lessons taught by farmers like you.`;
+
+  if (tnMode) {
+    fallbackText = i18n.phrase('tn', 'wrapper') + '\n\n' + fallbackText;
+  }
 
   let llmText = null;
   if (config.ENABLE_LLM) {

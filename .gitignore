@@ -12,3 +12,9 @@ data/*.json
 .env.*
 # smoke-test runtime dirs
 .smoke-data*/
+
+# Runtime data dirs (json or sqlite state, regenerated at runtime)
+.data/
+.smoke-data/
+*.sqlite
+*.sqlite-journal

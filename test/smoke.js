@@ -247,7 +247,7 @@ async function chat(message, name) {
   const manifest = await (await fetch(`${base}/manifest.webmanifest`)).json();
   check('manifest served', manifest.name && manifest.display === 'standalone' && manifest.icons.length >= 3);
   const sw = await (await fetch(`${base}/sw.js`)).text();
-  check('service worker served', sw.includes('agrisphere-v1'));
+  check('service worker served', /agrisphere-v\d/.test(sw));
   for (const icon of ['/icons/icon-192.png', '/icons/icon-512.png', '/icons/icon-64.png']) {
     const ir = await fetch(base + icon);
     const ib = Buffer.from(await ir.arrayBuffer());

@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   const $ = (id) => document.getElementById(id);
-  const OWNER_KEY = 'agrisphere.partnerId.v1';
+  const OWNER_KEY = 'agrisphere.ownerId.v1'; // one web identity per browser
   const ownerId = localStorage.getItem(OWNER_KEY) || (crypto.randomUUID && crypto.randomUUID()) || String(Date.now());
   localStorage.setItem(OWNER_KEY, ownerId);
 

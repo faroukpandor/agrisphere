@@ -1,12 +1,22 @@
-/* AgriSphere service worker — offline-capable shell for the chat UI + marketplace */
-const CACHE = 'agrisphere-v1';
+/* AgriSphere service worker — offline-capable shell for the chat UI + platform pages */
+const CACHE = 'agrisphere-v2';
 const SHELL = [
   '/',
   '/index.html',
   '/market.html',
+  '/prices.html',
+  '/account.html',
+  '/ussd.html',
+  '/biz.html',
+  '/programs.html',
+  '/tourism.html',
+  '/partner.html',
   '/styles.css',
   '/app.js',
   '/market.js',
+  '/programs.js',
+  '/biz.js',
+  '/tourism.js',
   '/manifest.webmanifest',
   '/icons/icon-192.png',
   '/icons/icon-512.png',

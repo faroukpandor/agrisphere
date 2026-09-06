@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   const $ = (id) => document.getElementById(id);
-  const OWNER_KEY = 'agrisphere.orgId.v1';
+  const OWNER_KEY = 'agrisphere.ownerId.v1'; // one web identity per browser
   const ownerId = localStorage.getItem(OWNER_KEY) || (crypto.randomUUID && crypto.randomUUID()) || String(Date.now());
   localStorage.setItem(OWNER_KEY, ownerId);
 
@@ -37,6 +37,7 @@
     }
     grid.innerHTML = '';
     programs.forEach((p) => {
+      const owned = p.ownerId === ownerId;
       const card = document.createElement('article');
       card.className = 'listing-card';
       card.innerHTML =
@@ -53,8 +54,10 @@
         '<div class="l-foot">' +
           '<button class="act pb" data-id="' + p.id + '">📋 Production playbook</button>' +
           '<button class="btn-contact" data-apply="' + p.id + '">✍ Apply as farmer</button>' +
+          (owned ? '<button class="act mgmt" data-mgmt="' + p.id + '">⚙️ Manage</button>' : '') +
         '</div>' +
         '<div id="play-' + p.id + '" class="playbook" hidden></div>' +
+        (owned ? '<div id="mgmt-' + p.id + '" class="manage" hidden></div>' : '') +
         '<div id="apply-' + p.id + '" class="applyform" hidden>' +
           '<h4>Apply to ' + esc(p.product) + ' programme</h4>' +
           '<input class="apName" placeholder="Your / group name *" />' +
@@ -107,6 +110,110 @@
       alert('✅ Application sent to the buyer. Keep your production records ready — they will contact you.');
       load();
     }));
+
+    // ---- owner lifecycle management (status / milestones / deliveries /
+    //      disputes / settlement / compliance pack) ----
+    const STATUSES = ['open', 'contracting', 'in-production', 'delivering', 'settled', 'closed'];
+    grid.querySelectorAll('[data-mgmt]').forEach((b) => b.addEventListener('click', async () => {
+      const out = $('mgmt-' + b.dataset.mgmt);
+      if (out.hidden === false) { out.hidden = true; return; }
+      out.hidden = false;
+      out.innerHTML = '<p class="loading">Loading programme…</p>';
+      await mgmtRender(b.dataset.mgmt, out);
+    }));
+
+    async function mgmtApi(method, path, body) {
+      const r = await fetch(path, {
+        method,
+        headers: { 'Content-Type': 'application/json', 'x-owner-id': ownerId },
+        body: body ? JSON.stringify(body) : undefined,
+      });
+      const d = await r.json().catch(() => ({}));
+      return { ok: r.ok, d };
+    }
+
+    async function mgmtRender(id, out) {
+      try {
+        const d = await (await fetch('/api/programs/' + id, { headers: { 'x-owner-id': ownerId } })).json();
+        const p = d.program;
+        out.innerHTML =
+          '<h4>⚙️ Manage · ' + esc(p.orgName) + ' — ' + esc(p.product) + '</h4>' +
+          '<p><span class="pill">' + esc(p.status) + '</span> · ' + p.milestonesDone + '/' + p.milestonesTotal + ' milestones · ' + p.deliveriesCount + ' deliveries' + (p.openDisputes ? ' · ⚠ ' + p.openDisputes + ' open dispute' + (p.openDisputes === 1 ? '' : 's') : '') + '</p>' +
+
+          '<div class="mg-row"><strong>Status</strong> ' +
+          '<select class="stSel">' + STATUSES.map((s2) => '<option value="' + s2 + '"' + (s2 === p.status ? ' selected' : '') + '>' + s2 + '</option>').join('') + '</select> ' +
+          '<button class="btn btn-primary stGo" style="padding:.35rem .8rem; font-size:.85rem;">Set</button></div>' +
+
+          '<div class="mg-row"><strong>Milestones</strong><ul class="mg-list">' +
+          (p.milestones || []).map((m) =>
+            '<li><label style="font-weight:500;"><input type="checkbox" class="msCk" data-i="' + m.idx + '"' + (m.status === 'done' ? ' checked' : '') + ' /> ' +
+            esc(m.stage) + '</label>' + (m.status === 'done' && m.at ? '<span class="fine"> ✓ ' + new Date(m.at).toLocaleDateString() + '</span>' : '') + '</li>').join('') +
+          '</ul></div>' +
+
+          '<div class="mg-row"><strong>Deliveries / batch records</strong>' +
+          (p.deliveries && p.deliveries.length
+            ? '<table class="mg-tbl"><tr><th>Date</th><th>Batch</th><th>Qty</th><th>Quality</th></tr>' +
+              p.deliveries.map((dl) => '<tr><td>' + esc(dl.date) + '</td><td>' + esc(dl.batchCode || '—') + '</td><td>' + esc(dl.qty) + (dl.unit ? ' ' + esc(dl.unit) : '') + '</td><td>' + esc(dl.quality || '—') + '</td></tr>').join('') + '</table>'
+            : '<p class="fine">No deliveries recorded.</p>') +
+          '<div class="dl-add"><input class="dlQty" placeholder="Qty * (e.g. 12 t)" style="width:110px;"/>' +
+          '<input class="dlBatch" placeholder="Batch code (e.g. KG-2027-001)" style="flex:1;"/>' +
+          '<input class="dlQuality" placeholder="Quality note" style="flex:1;"/>' +
+          '<input class="dlDate" type="date" style="width:150px;"/>' +
+          '<button class="btn btn-primary dlGo" style="padding:.35rem .8rem; font-size:.85rem;">Record</button></div></div>' +
+
+          '<div class="mg-row"><strong>Disputes</strong>' +
+          ((p.disputes || []).length
+            ? '<ul class="mg-list">' + p.disputes.map((ds) =>
+                '<li>' + (ds.status === 'open' ? '⚠ ' : '✔ ') + esc(ds.text) + ' <span class="fine">— ' + esc(ds.by) + ' (' + ds.status + ')</span>' +
+                (ds.status === 'open'
+                  ? '<div class="ds-res"><input class="dsResTxt" placeholder="Resolution note *" style="flex:1;" /><button class="btn btn-primary dsResGo" data-d="' + ds.id + '" style="padding:.3rem .7rem; font-size:.82rem;">Resolve</button></div>'
+                  : '') + '</li>').join('') + '</ul>'
+            : '<p class="fine">No disputes.</p>') + '</div>' +
+
+          (p.status !== 'settled'
+            ? '<div class="mg-row"><strong>Settle (record agreed payment)</strong> ' +
+              '<input class="setAmt" placeholder="Amount paid * (e.g. P18,240 net)" style="flex:1;" />' +
+              '<input class="setMtd" placeholder="Method (e.g. direct deposit)" style="flex:1;" />' +
+              '<button class="btn btn-primary setGo" style="padding:.35rem .8rem; font-size:.85rem;">Record settlement</button></div>'
+            : '<p class="ok-note">✅ Settled ' + (p.settlement && p.settlement.amount ? '— ' + esc(p.settlement.amount) + ' (' + esc(p.settlement.method || '') + ')' : '') + '</p>') +
+
+          '<div class="mg-row"><a class="btn btn-ghost2" href="/api/programs/' + id + '/compliance-pack?format=html" target="_blank" rel="noopener">📜 Compliance readiness pack (print / PDF)</a></div>';
+
+        out.querySelector('.stGo').addEventListener('click', async () => {
+          const r = await mgmtApi('POST', '/api/programs/' + id + '/status', { status: out.querySelector('.stSel').value });
+          if (r.ok) { await mgmtRender(id, out); load(); } else alert(r.d.error || 'Failed');
+        });
+        out.querySelectorAll('.msCk').forEach((ck) => ck.addEventListener('change', async () => {
+          await mgmtApi('POST', '/api/programs/' + id + '/milestones/' + ck.dataset.i, { done: ck.checked });
+          await mgmtRender(id, out); load();
+        }));
+        out.querySelector('.dlGo').addEventListener('click', async () => {
+          const qty = out.querySelector('.dlQty').value.trim();
+          if (!qty) { alert('Qty is required.'); return; }
+          const r = await mgmtApi('POST', '/api/programs/' + id + '/deliveries', {
+            qty, batchCode: out.querySelector('.dlBatch').value.trim(),
+            quality: out.querySelector('.dlQuality').value.trim(),
+            date: out.querySelector('.dlDate').value,
+          });
+          if (r.ok) { await mgmtRender(id, out); load(); } else alert(r.d.error || 'Failed');
+        });
+        out.querySelectorAll('.dsResGo').forEach((b2) => b2.addEventListener('click', async () => {
+          const txt = b2.closest('.ds-res').querySelector('.dsResTxt').value.trim();
+          if (!txt) { alert('Resolution note required.'); return; }
+          const r = await mgmtApi('POST', '/api/programs/' + id + '/disputes/' + b2.dataset.d + '/resolve', { resolution: txt });
+          if (r.ok) { await mgmtRender(id, out); load(); } else alert(r.d.error || 'Failed');
+        }));
+        const setBtn = out.querySelector('.setGo');
+        if (setBtn) setBtn.addEventListener('click', async () => {
+          const amount = out.querySelector('.setAmt').value.trim();
+          if (!amount) { alert('Amount required.'); return; }
+          const r = await mgmtApi('POST', '/api/programs/' + id + '/settle', { amount, method: out.querySelector('.setMtd').value.trim() });
+          if (r.ok) { await mgmtRender(id, out); load(); } else alert(r.d.error || 'Failed');
+        });
+      } catch (_) {
+        out.innerHTML = '<p class="fine">Manage view unavailable — are you the owner? (owner id: ' + esc(ownerId.slice(0, 8)) + '…)</p>';
+      }
+    }
   }
 
   async function loadFairTerms() {

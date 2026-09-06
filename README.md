@@ -15,7 +15,7 @@ faith-based export certifications) where they choose them.
 
 ---
 
-## What it covers (84 knowledge units today)
+## What it covers (73 knowledge topics + platform menus)
 
 **🌾 All agricultural production systems** — field crops (maize, sorghum, cowpeas,
 groundnuts, sunflower, sweet potato); horticulture (tomato, leafy veg/morogo, protected
@@ -56,6 +56,14 @@ extension & veterinary services). See **docs/COMPLIANCE.md** for the full framew
 | 🤝 **Buyer-led programmes** | Structured demand programmes (`/programs.html`) with fair-terms gate, farmer applications inbox, stage-gated production playbooks |
 | 🧭 **Agri-tourism** | Partner experience catalogue + trip finder (`/tourism.html`): farm stays, market tours, festivals; listings & leads only — bookings with partners direct |
 | 🤝 **Partner tracks** | `/partner.html` + contract templates for buyer MOUs, tourism listings, licensed deployments & premium plan review (`docs/templates/`) |
+| ✅ **Verified badges** | Consent-first phone verification (OTP, `/account.html`); verified listings & applications carry the ✔ badge; organisations verified by humans via admin console |
+| 💰 **Official price board** | `/prices.html` — admin-loaded bulletin references only (BAMB/BMC… with source+date+area); the bot quotes this board, never invents prices |
+| 🏢 **Organisations** | Register a buyer/co-op/NGO/extension/insurer/input/media org → assets dashboard + one-show API key (hash-only storage) |
+| 🔔 **Alerts** | Keyword price alerts + programme-update pings to WhatsApp/SMS/Telegram (dev-log until tokens set) |
+| ⚙️ **Programme lifecycle** | Open → contracting → in-production → delivering → settled, with milestones, batch deliveries, dispute trail, settlement record and a printable **compliance readiness pack** (self-declared, not a certificate) |
+| 📟 **USSD engine** | Standard gateway request/response (`/api/ussd` + `/ussd.html` simulator) — any phone can ask, check prices, programmes, marketplace |
+| 👤 **Account hub** | `/account.html` — one browser identity across listings, applications, reviews, alerts & org |
+| 🛡️ **Admin console** | `/admin.html` — learning queue, teach verified answers, load bulletins, verify organisations |
 | 📱 **Multi-channel** | Web + PWA, WhatsApp, Messenger, Telegram webhooks on one Express app |
 | 🔌 **Provider-independent AI** | Deterministic retrieval by default; optional grounded LLM via any OpenAI-compatible API |
 | 📲 **PWA / offline** | Installable; service worker caches the shell; works on low bandwidth |
@@ -67,7 +75,10 @@ extension & veterinary services). See **docs/COMPLIANCE.md** for the full framew
 1. Dashboard → **New + → Web Service** → connect `faroukpandor/agrisphere`.
 2. **Build:** empty · **Start:** `npm start` · Instance: Free (spins down after ~15 min idle, wakes on request).
 3. Optional env vars: `ADMIN_TOKEN`, `TEACH_TOKEN`, `VERIFY_TOKEN`, `OPENAI_API_KEY`,
-   `WHATSAPP_TOKEN`+`WHATSAPP_PHONE_ID`, `FACEBOOK_PAGE_TOKEN`, `TELEGRAM_TOKEN`.
+   `WHATSAPP_TOKEN`+`WHATSAPP_PHONE_ID`, `FACEBOOK_PAGE_TOKEN`, `TELEGRAM_TOKEN`,
+   `DATA_BACKEND` (`json` default | `sqlite` for org-grade persistence), `DATA_DIR`,
+   `SMS_PROVIDER_URL` (production OTP delivery; without it preview prints codes to the log).
+   `render.yaml` pins `NODE_ENV=production`, which also disables preview-OTP exposure.
 4. Deploy → open `/healthz` → expect `{"status":"ok", ...}`.
 
 > If an old service (e.g. `agrisphere-dnkb`) exists with failed/no deployments, recreate the
@@ -79,7 +90,7 @@ extension & veterinary services). See **docs/COMPLIANCE.md** for the full framew
 ```bash
 npm install
 npm start      # → http://localhost:3000  (chat UI + /market.html)
-npm test       # 30+ end-to-end assertions
+npm test       # 104 end-to-end assertions (smoke: chat, tracks, P0 platform layer)
 ```
 
 ## 📱 Channel activation
@@ -103,6 +114,17 @@ develop end-to-end before activating.
 | `/api/experiences` | GET/POST | agri-tourism catalogue: browse/filter, partner listings, report |
 | `/api/bizplan/enterprises` · `/api/bizplan/generate` | GET/POST | starter toolkit: enterprise list + guided plan generation |
 | `/api/admin/learned` · `/api/admin/unanswered` | GET | learning queue review (`ADMIN_TOKEN`) |
+| `/api/identity/otp` · `/api/identity/verify` · `/api/identity/status` | POST/GET | phone OTP verification (headers: `x-owner-id`) |
+| `/api/prices/references` | GET/POST/DELETE | official bulletin board (add/remove admin-only via `x-admin-token`) |
+| `/api/ratings` | POST | `{targetType, targetId, byOwnerId, score 1–5}` (dedupe per rater) |
+| `/api/ratings/:targetType/:targetId` · `/api/ratings/:id` | GET/DELETE | aggregates + moderation removal (admin) |
+| `/api/orgs/register` · `/api/orgs/mine` · `/api/orgs/assets` | POST/GET | organisations + one-show API key; `x-owner-id` scoping |
+| `/api/orgs` · `/api/orgs/:id/verify` | GET/POST | admin list & document-check verification |
+| `/api/alerts` · `/api/alerts/subscribe` · `/api/alerts/:id` | GET/POST/DELETE | keyword alert subscriptions |
+| `/api/notify/digest` | GET | admin digest summary |
+| `/api/programs/:id/status` · `/milestones/:idx` · `/deliveries` · `/disputes` · `/disputes/:id/resolve` · `/settle` | POST | programme lifecycle engine (owner/admin) |
+| `/api/programs/:id/compliance-pack` | GET | printable readiness pack (`?format=html`); owner, producer applicant or admin |
+| `/api/ussd` | POST | USSD gateway `{sessionId, phoneNumber, text}` → `CON/END` text |
 | `/webhooks/{whatsapp,messenger}` | GET/POST | Meta verification + inbound |
 | `/webhooks/telegram/:secret` | POST | Telegram inbound |
 | `/healthz` | GET | status: engine, channels, topics, marketplace, learned |
@@ -110,18 +132,26 @@ develop end-to-end before activating.
 ## 🗂 Structure
 
 ```
-server.js            Express routes: chat, feedback, marketplace, programmes, tourism, bizplan, webhooks, admin
-src/config.js        env-driven config
+server.js            Express routes: chat, feedback, marketplace, programmes, tourism, bizplan, identity/OTP, prices, ratings, orgs, alerts, compliance pack, USSD, webhooks, admin
+src/config.js        env-driven config (backend, OTP, SMS, org keys, …)
+src/store.js         pluggable persistence: JSON (atomic) default or node:sqlite; sessions, learned, unanswered, listings, programmes, orgs, alerts, otps, priceRefs, ratings, stats
 src/knowledge.js     merged knowledge core (triggers/entries + disclaimers)
-src/topics-a.js      production systems module
-src/topics-b.js      NRM + standards + finance/ethics + people + platform triggers
-src/topics-c.js      cattle systems, more crops, land, value chains
-src/brain.js         retrieval: teach → learned → triggers → scored KB → fallback queue
+src/topics-a/b/c.js  production / NRM / cattle & value-chain modules
+src/topics-d.js      market-research module: extra crops, soil testing, hermetic storage, insurance, market calendar, agritourism, pesticide safety + platform menu triggers
+src/brain.js         retrieval: Setswana v1 → teach → learned → triggers → scored KB → fallback queue
+src/i18n.js          Setswana detection + noun→topic routing (v1, wrapper answers)
+src/identity.js      OTP issue/verify (sha256, TTL, 5 attempts) → session verified badge
+src/prices.js        official bulletin references (source+date required, admin add)
+src/ratings.js       1–5 ratings, dedupe per target+rater, admin removal
+src/orgs.js          org registration (buyer/coop/ngo/extension/insurer/input/media), one-show API keys (hash-only), owner scoping, admin verify
+src/notify.js        alert subscriptions + outbound (WhatsApp/Telegram/SMS when configured, else dev-log)
+src/compliance.js    delivery-readiness pack builder + HTML renderer (self-declared)
+src/ussd.js          session menu engine (CON/END, 158-char limit, pending map)
 src/marketplace.js   listings board logic (30-day TTL, category model, reporting)
 src/channels.js      WhatsApp/Messenger/Telegram adapters
 src/llm.js           optional grounded LLM (OpenAI-compatible, off by default)
 src/store.js         JSON persistence (sessions, learned, feedback, unanswered, listings, stats)
-public/              chat UI + marketplace + starter/buyer/tourism/partner pages + PWA
+public/              chat UI + track pages (biz/programs/tourism/partner) + market + prices board + account & orgs + USSD simulator + admin console + PWA
 src/programs.js      buyer-led programme logic (fair-terms gate, playbooks)
 src/experiences.js   agri-tourism catalogue logic
 src/bizplan.js       guided business-plan generator

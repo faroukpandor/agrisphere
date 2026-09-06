@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin console — AgriSphere</title>
+  <meta name="description" content="AgriSphere admin console: moderation queue, learned lessons, official price bulletins, organisation verification." />
+  <meta name="robots" content="noindex" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <meta name="theme-color" content="#14532d" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>" />
+  <link rel="stylesheet" href="/styles.css" />
+  <style>
+    .box { background: #fff; border: 1px solid #e3efe6; border-radius: var(--radius); padding: 1.4rem; margin-top: 18px; box-shadow: var(--shadow); }
+    input, textarea, select { padding: .55rem .7rem; border: 1px solid #cfe0d3; border-radius: 10px; font-size: .92rem; width: 100%; background: #fff; margin-top: 6px; }
+    label { font-size: .85rem; font-weight: 700; color: var(--green-900); }
+    .btn { cursor: pointer; border: 0; margin-top: 10px; }
+    .row { border-top: 1px dashed #e3efe6; padding: .6rem 0; }
+    .q { font-weight: 700; }
+    .meta { font-size: .78rem; color: var(--muted); }
+    .warn { background: #fff7ed; border: 1px solid #fed7aa; color: #9a3412; border-radius: 10px; padding: .7rem .9rem; font-size: .88rem; }
+    .ok { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; border-radius: 10px; padding: .7rem .9rem; font-size: .88rem; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    @media (max-width: 780px) { .grid2 { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+<header class="site-header">
+  <div class="wrap header-inner">
+    <a class="brand" href="/">
+      <span class="brand-logo">🌍🌱</span>
+      <span class="brand-name">AgriSphere <small>Admin</small></span>
+    </a>
+    <nav class="nav">
+      <a href="/#chat">Chat</a>
+      <a href="/market.html">🌾 Marketplace</a>
+      <a href="/account.html">👤 My account</a>
+      <a class="nav-gh" href="https://github.com/faroukpandor/agrisphere" target="_blank" rel="noopener">GitHub ↗</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap" style="padding: 30px 20px 60px; max-width: 980px;">
+  <p class="eyebrow">🛡️ Moderation &amp; official data</p>
+  <h1>Admin console</h1>
+  <p class="fine">Human-in-the-loop by design: this console is where an administrator answers the learning queue, loads official price bulletins and verifies organisations. The token is stored in this tab only. Never leave this page open on a shared device.</p>
+
+  <div class="box" id="gate">
+    <label for="token">Admin token</label>
+    <input id="token" type="password" placeholder="x-admin-token (ADMIN_TOKEN env)" />
+    <button class="btn btn-primary" id="unlock">Unlock console</button>
+    <p class="fine" style="margin-top:8px;">If no ADMIN_TOKEN is configured on this instance, admin endpoints are open (development only) — the console still works.</p>
+  </div>
+
+  <div id="console" hidden>
+    <div class="grid2">
+      <div class="box">
+        <h3>🤔 Learning queue (unanswered)</h3>
+        <div id="queue" class="warn">Loading…</div>
+      </div>
+      <div class="box">
+        <h3>📚 Teach an answer (becomes permanent knowledge)</h3>
+        <label for="tq">Question</label>
+        <textarea id="tq" rows="2" placeholder="The question as farmers ask it"></textarea>
+        <label for="ta">Answer</label>
+        <textarea id="ta" rows="4" placeholder="Verified answer with local sources — this is public knowledge from now on"></textarea>
+        <button class="btn btn-primary" id="teachBtn">Teach</button>
+        <p class="ok" id="teachMsg" hidden></p>
+        <h4 style="margin-top:16px;">Recently taught</h4>
+        <div id="learned" class="fine">—</div>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="box">
+        <h3>💰 Load official price bulletin</h3>
+        <p class="fine">Only add figures you can point to (BAMB depot bulletin, BMC schedule, ministry report). The bot quotes this board — invented numbers would break the honesty promise.</p>
+        <label for="pItem">Item *</label>
+        <input id="pItem" placeholder="maize (white)" />
+        <label for="pUnit">Unit</label>
+        <input id="pUnit" placeholder="50kg bag" />
+        <label for="pPrice">Price *</label>
+        <input id="pPrice" placeholder="P190–P210" />
+        <label for="pSource">Source *</label>
+        <input id="pSource" placeholder="BAMB depot bulletin (bamb.co.bw)" />
+        <label for="pArea">Area</label>
+        <input id="pArea" placeholder="Gaborone depot" />
+        <label for="pDate">Bulletin date</label>
+        <input id="pDate" placeholder="2026-09-02" />
+        <label for="pUrl">Link (optional)</label>
+        <input id="pUrl" placeholder="https://…" />
+        <button class="btn btn-primary" id="priceBtn">Add reference</button>
+        <p id="priceMsg" class="fine"></p>
+        <div id="refs" class="fine" style="margin-top:10px;">—</div>
+      </div>
+      <div class="box">
+        <h3>🏢 Verify organisations</h3>
+        <p class="fine">Human check of registration documents before an org gets the verified badge.</p>
+        <div id="orgs" class="warn">Loading…</div>
+        <h4 style="margin-top:16px;">📊 Platform digest</h4>
+        <div id="digest" class="fine">—</div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer style="border-top:1px solid #e3efe6;" class="wrap">
+  <p class="fine" style="padding:16px 0;">AgriSphere · <a href="/#chat">Chat</a> · <a href="/prices.html">Prices</a> · <a href="/account.html">My account</a> · <a href="/ussd.html">USSD demo</a></p>
+</footer>
+
+<script>
+(function () {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const tokenKey = 'agrisphere.adminToken.v1';
+  const esc = (s) => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const A = () => ({ 'Content-Type': 'application/json', 'x-admin-token': sessionStorage.getItem(tokenKey) || '' });
+  let busy = false;
+
+  function unlock() {
+    const t = $('token').value.trim();
+    sessionStorage.setItem(tokenKey, t);
+    $('gate').hidden = true;
+    $('console').hidden = false;
+    loadAll();
+  }
+  $('unlock').addEventListener('click', unlock);
+  if (sessionStorage.getItem(tokenKey) !== null && sessionStorage.getItem(tokenKey) !== '') unlock();
+  else if (localStorage.getItem(tokenKey)) { $('token').value = localStorage.getItem(tokenKey); }
+
+  async function loadAll() {
+    loadQueue(); loadLearned(); loadRefs(); loadOrgs(); loadDigest();
+  }
+
+  async function loadQueue() {
+    try {
+      const d = await (await fetch('/api/admin/unanswered', { headers: A() })).json();
+      const items = d.unanswered || [];
+      $('queue').innerHTML = items.length
+        ? items.map((u) => '<div class="row"><div class="q">❓ ' + esc(u.text) + '</div><div class="meta">' + esc(u.channel || 'web') + ' · ' + new Date(u.at).toLocaleString() + (u.answered ? ' · answered' : '') + '</div></div>').join('')
+        : '<div class="ok">Queue is empty — the bot answered everything confidently. 🎉</div>';
+    } catch (_) { $('queue').innerHTML = '<div class="warn">Could not load queue (token?).</div>'; }
+  }
+
+  async function loadLearned() {
+    try {
+      const d = await (await fetch('/api/admin/learned', { headers: A() })).json();
+      const items = d.learned || [];
+      $('learned').innerHTML = items.length
+        ? items.slice(-8).reverse().map((l) => '<div class="row"><strong>' + esc(l.question) + '</strong><div class="meta">' + esc(l.answer).slice(0, 90) + '… · by ' + esc(l.by) + '</div></div>').join('')
+        : 'No lessons yet.';
+    } catch (_) { $('learned').textContent = '—'; }
+  }
+
+  $('teachBtn').addEventListener('click', async () => {
+    const q = $('tq').value.trim(), a = $('ta').value.trim();
+    if (!q || !a) return;
+    const r = await (await fetch('/api/teach', {
+      method: 'POST', headers: A(),
+      body: JSON.stringify({ question: q, answer: a }),
+    })).json();
+    if (r.ok) {
+      $('teachMsg').hidden = false;
+      $('teachMsg').textContent = '✅ Taught — it is now permanent knowledge (' + r.learned + ' lessons total).';
+      $('tq').value = ''; $('ta').value = '';
+      loadLearned();
+    }
+  });
+
+  async function loadRefs() {
+    try {
+      const d = await (await fetch('/api/prices/references')).json();
+      $('refs').innerHTML = d.references.length
+        ? d.references.slice(-6).reverse().map((r) => '<div class="row">' + esc(r.item) + ' — <strong>' + esc(r.price) + '</strong><div class="meta">' + esc(r.source) + ' · ' + esc(r.date) + '</div></div>').join('')
+        : 'No references loaded yet.';
+    } catch (_) { $('refs').textContent = '—'; }
+  }
+  $('priceBtn').addEventListener('click', async () => {
+    const body = { item: $('pItem').value.trim(), unit: $('pUnit').value.trim(), price: $('pPrice').value.trim(), source: $('pSource').value.trim(), area: $('pArea').value.trim(), date: $('pDate').value.trim(), url: $('pUrl').value.trim() };
+    if (!body.item || !body.price || !body.source) { $('priceMsg').textContent = 'item, price and source are required.'; return; }
+    const r = await (await fetch('/api/prices/references', { method: 'POST', headers: A(), body: JSON.stringify(body) })).json();
+    $('priceMsg').textContent = r.ref ? '✅ Added — visible on the Prices board and quotable by the bot.' : (r.error || 'Failed.');
+    if (r.ref) { ['pItem','pUnit','pPrice','pSource','pArea','pDate','pUrl'].forEach((i) => $(i).value = ''); loadRefs(); }
+  });
+
+  async function loadOrgs() {
+    try {
+      const d = await (await fetch('/api/orgs', { headers: A() })).json();
+      const items = d.orgs || [];
+      $('orgs').innerHTML = items.length
+        ? items.map((o) => '<div class="row"><strong>' + esc(o.name) + '</strong> <span class="meta">(' + esc(o.type) + (o.verified ? ' · ✔ verified' : '') + ')</span>' +
+            '<div class="meta">' + esc(o.area || '—') + ' · ' + esc(o.contact) + '</div>' +
+            (o.verified ? '' : '<button class="btn btn-primary" style="margin-top:6px; padding:.35rem .9rem; font-size:.85rem;" data-v="' + o.id + '">✔ Verify after document check</button>') + '</div>').join('')
+        : '<div class="ok">No organisations registered yet.</div>';
+      document.querySelectorAll('[data-v]').forEach((b) => b.addEventListener('click', async () => {
+        await fetch('/api/orgs/' + b.dataset.v + '/verify', { method: 'POST', headers: A() });
+        loadOrgs();
+      }));
+    } catch (_) { $('orgs').innerHTML = '<div class="warn">Could not load organisations (token?).</div>'; }
+  }
+
+  async function loadDigest() {
+    try {
+      const d = await (await fetch('/api/notify/digest')).json();
+      $('digest').textContent = d.digest || '—';
+    } catch (_) { $('digest').textContent = '—'; }
+  }
+})();
+</script>
+</body>
+</html>

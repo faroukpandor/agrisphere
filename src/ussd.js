@@ -64,7 +64,7 @@ async function handle({ sessionId, phoneNumber, text }) {
     const lines = progs.map((p, i) => `${i + 1}. ${p.product} — ${p.orgName}`).join('\n');
     return { reply: cut('Open programmes:\n' + lines + '\nReply P1-P6 for details or 0 for menu'), end: false };
   }
-  if (state && state.step === 'progdetail') {
+  if (state && (state.step === 'prog' || state.step === 'progdetail')) {
     pending.delete(sid);
     const m = /^P?(\d)$/i.exec(entry);
     if (!m) return { reply: 'Menu', end: false };

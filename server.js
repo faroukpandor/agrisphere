@@ -237,8 +237,17 @@ app.get('/api/programs', (req, res) => {
 });
 
 app.get('/api/programs/:id', (req, res) => {
+  const raw = store.programs.find((x) => x.id === String(req.params.id));
+  if (!raw) return fail(res, 'programme not found', 404);
   const p = programs.listPrograms({}).find((x) => x.id === String(req.params.id));
-  if (!p) return fail(res, 'programme not found', 404);
+  const caller = String(req.headers['x-owner-id'] || '');
+  const isAdmin = config.ADMIN_TOKEN && req.headers['x-admin-token'] === config.ADMIN_TOKEN;
+  if (raw.ownerId === caller || isAdmin) {
+    // owner/admin see the full lifecycle trail (milestones, deliveries, disputes)
+    p.milestones = raw.milestones || [];
+    p.deliveries = raw.deliveries || [];
+    p.disputes = raw.disputes || [];
+  }
   ok(res, { program: p, playbook: programs.playbookFor(p.product) });
 });
 

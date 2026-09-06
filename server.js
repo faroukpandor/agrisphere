@@ -258,9 +258,13 @@ app.post('/api/programs', (req, res) => {
   ok(res, r, 201);
 });
 
-app.post('/api/programs/:id/applications', (req, res) => {
+app.post('/api/programs/:id/applications', async (req, res) => {
   const r = programs.applyToProgram(String(req.params.id), { ...(req.body || {}), ownerId: req.headers['x-owner-id'] });
   if (r.error) return fail(res, r.error);
+  const p = store.programs.find((x) => x.id === String(req.params.id));
+  try {
+    await notify.fireOn(`${p ? p.title : 'programme'} — new application from ${String((req.body || {}).name || 'a farmer').slice(0, 40)}`, 'new application');
+  } catch (_) {}
   ok(res, r, 201);
 });
 

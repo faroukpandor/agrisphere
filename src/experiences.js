@@ -19,6 +19,7 @@ const crypto = require('crypto');
 const store = require('./store');
 const config = require('./config');
 const ratings = require('./ratings');
+const orgs = require('./orgs');
 
 const TYPES = [
   'farm-stay',
@@ -115,7 +116,7 @@ function createExperience(body) {
     whatsIncluded: clean(body.whatsIncluded, 400),
     safetyNote: clean(body.safetyNote, 300) || 'Standard rural-tourism precautions apply — confirm access, weather and medical provisions with the partner before travelling.',
     contact,
-    verified: !!store.getSession(owner).verified,
+    verified: !!store.getSession(owner).verified || !!orgs.orgOf(owner)?.verified,
     createdAt: Date.now(),
     expiresAt: Date.now() + TTL_MS,
   };

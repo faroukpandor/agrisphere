@@ -71,20 +71,25 @@ async function sendToChannel(channel, sender, payload, recordId) {
 // ---------------------------------------------------------------------------
 // WhatsApp Cloud API
 // ---------------------------------------------------------------------------
-function waTextMessage(to, body) {
+function waTextMessage(to, body, buttons) {
+  let text = body;
+  // WhatsApp interactive buttons require Meta-approved templates; the safe
+  // free-tier pattern is a plain-text tap hint instead. Inbound interactive
+  // callbacks (button_reply / list_reply) are parsed regardless.
+  if (buttons && buttons.length && buttons.length <= 4) {
+    text += '\n\nTap one to send it:\n' + buttons.map((b, i) => `${i + 1}. ${b.label}`).join('\n');
+  }
   const payload = {
     messaging_product: 'whatsapp',
     recipient_type: 'individual',
     to,
     type: 'text',
-    text: { preview_url: false, body },
+    text: { preview_url: false, body: text },
   };
-  // Follow-up buttons on WhatsApp require an interactive template approved by
-  // Meta — for the free/demo tier we append a one-tap reply hint instead.
   return payload;
 }
 
-async function sendWhatsApp(phone, { text }) {
+async function sendWhatsApp(phone, { text, buttons }) {
   if (!config.WHATSAPP_TOKEN || !config.WHATSAPP_PHONE_ID) {
     console.log(`[whatsapp:dev] -> ${phone}: ${text.slice(0, 120).replace(/\n/g, ' ')}...`);
     return { ok: true, via: 'dev-log' };
@@ -97,7 +102,7 @@ async function sendWhatsApp(phone, { text }) {
         Authorization: `Bearer ${config.WHATSAPP_TOKEN}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(waTextMessage(phone, text)),
+      body: JSON.stringify(waTextMessage(phone, text, buttons)),
     }
   );
   if (!resp.ok) {
@@ -173,17 +178,18 @@ function parseWhatsApp(body) {
   for (const entry of body.entry || []) {
     for (const change of entry.changes || []) {
       for (const msg of change.value?.messages || []) {
-        if (msg.type !== 'text') continue; // buttons/interactive handled as text by sender
-        const text = msg.text?.body ?? '';
-        const interactive = msg.interactive;
-        if (interactive) {
-          msgs.push({
-            userId: msg.from,
-            text: interactive.button_reply?.title || interactive.list_reply?.title || text,
-            raw: msg,
-          });
+        // Interactive replies (button/list taps) carry the tapped label as
+        // text — check BEFORE the text-only guard.
+        if (msg.interactive) {
+          const it = msg.interactive;
+          const title = it.button_reply?.title || it.list_reply?.title || it.nfm_reply?.response_json || '';
+          const id = it.button_reply?.id || it.list_reply?.id || '';
+          msgs.push({ userId: msg.from, text: title || id || 'menu', raw: msg });
           continue;
         }
+        if (msg.type !== 'text') continue; // reactions/media/statuses ignored
+        const text = msg.text?.body ?? '';
+        if (!text) continue;
         msgs.push({ userId: msg.from, text, raw: msg });
       }
     }
@@ -221,12 +227,60 @@ function parseTelegram(body) {
 }
 
 // ---------------------------------------------------------------------------
+// Opt-in / opt-out (data dignity) — per channel, stored on the session.
+// WhatsApp-style STOP/START commands are honoured; web chat is consent-first
+// by nature (user typed first).
+// ---------------------------------------------------------------------------
+function isOptedOut(session, channel) {
+  return !!(session && session.channelOptOut && session.channelOptOut[channel]);
+}
+
+function setOptOut(id, session, channel, value) {
+  session.channelOptOut = session.channelOptOut || {};
+  session.channelOptOut[channel] = !!value;
+  store.saveSession(id, session);
+}
+
+/** Returns true if the text was an opt-out command and was handled. */
+function handleOptCommand(id, channel, text, session) {
+  const t = String(text || '').trim().replace(/[.!]+$/, '').toLowerCase();
+  // Command must be the whole message so a real question like "stop armyworm
+  // eating my maize" is never swallowed.
+  const OUT = new Set(['stop', 'stop all', 'unsubscribe', 'aowa', 'tsamaya sentle', 'tsamaya']);
+  const IN = new Set(['start', 'subscribe', 'resume']);
+  if (OUT.has(t)) {
+    setOptOut(id, session, channel, true);
+    store.bump(`optouts.${channel}`);
+    return true;
+  }
+  if (IN.has(t)) {
+    setOptOut(id, session, channel, false);
+    store.bump(`optins.${channel}`);
+    return true;
+  }
+  return false;
+}
+
+// ---------------------------------------------------------------------------
 // Public entry used by server.js
 // ---------------------------------------------------------------------------
 async function ingest(channel, parsed) {
   const results = [];
   for (const m of parsed) {
     if (!m.text || !m.text.trim()) continue;
+    const uid = String(m.userId || 'anon');
+    const session = store.getSession(uid);
+
+    // data dignity: honour opt-out commands and skip processing when opted out
+    if (handleOptCommand(uid, channel, m.text, session)) {
+      results.push({ ok: true, pref: 'handled', text: m.text });
+      continue;
+    }
+    if (isOptedOut(session, channel)) {
+      results.push({ ok: true, pref: 'opted-out', text: m.text });
+      continue;
+    }
+
     store.bump(`channels.in.${channel}`);
     const r = await handleIncoming({
       channel,
@@ -247,4 +301,6 @@ module.exports = {
   parseTelegram,
   ingest,
   buildMessengerButtons,
+  handleOptCommand,
+  isOptedOut,
 };

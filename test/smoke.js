@@ -17,6 +17,7 @@ const fs = require('fs');
 try { fs.rmSync(process.env.DATA_DIR, { recursive: true, force: true }); } catch (_) {}
 
 const server = require('../server');
+const store = require('../src/store');
 const base = `http://127.0.0.1:${process.env.PORT}`;
 
 const sid = 'smoke-session-1';
@@ -408,6 +409,79 @@ async function chat(message, name) {
   const digest = await (await fetch(`${base}/api/notify/digest`)).json();
   check('admin digest summary', /AgriSphere digest/.test(digest.digest));
 
+  // 24. R1 channel interactive parse + opt-in/out (module-level, direct)
+  const chmod = require('../src/channels');
+  const waParsed = chmod.parseWhatsApp({
+    entry: [{ changes: [{ value: { messages: [
+      { from: '26770001111', type: 'interactive', interactive: { type: 'button_reply', button_reply: { id: 'x1', title: 'Latest prices' } } },
+      { from: '26770001111', type: 'text', text: { body: 'how do i plant maize?' } },
+      { from: '26770001111', type: 'reaction', reaction: { emoji: 'like' } },
+    ] } } ] } ],
+  });
+  check('whatsapp interactive reply parsed', waParsed.some((m) => m.text === 'Latest prices'));
+  check('whatsapp text parsed', waParsed.some((m) => m.text.includes('plant maize')));
+  check('whatsapp non-text ignored', waParsed.length === 2, 'len=' + waParsed.length);
+  const optS = store.getSession('smoke-opt');
+  check('opt: stop armyworm is a question', chmod.handleOptCommand('smoke-opt', 'whatsapp', 'stop armyworm eating my maize', optS) === false);
+  check('opt: bare stop opts out', chmod.handleOptCommand('smoke-opt', 'whatsapp', 'stop', optS) === true && chmod.isOptedOut(optS, 'whatsapp') === true);
+  check('opt: bare start opts back in', chmod.handleOptCommand('smoke-opt', 'whatsapp', 'start', optS) === true && chmod.isOptedOut(optS, 'whatsapp') === false);
+
+  // 25. R10 co-op member workspace
+  const coopOrg = await (await fetch(`${base}/api/orgs/register`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json', 'x-owner-id': 'coopLead-1' },
+    body: JSON.stringify({ name: 'Lentswe Co-op', type: 'coop', contact: 'Kefilwe, +267 71 333 444', area: 'Kweneng' }),
+  })).json();
+  check('co-op registered', !!coopOrg.apiKey && coopOrg.org.type === 'coop');
+  const addMem = await (await fetch(`${base}/api/orgs/${coopOrg.org.id}/members`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json', 'x-owner-id': 'coopLead-1' },
+    body: JSON.stringify({ memberId: 'farmer-1', role: 'member' }),
+  })).json();
+  check('leader adds member', addMem.ok === true && addMem.members.length === 1);
+  const addDenied = await (await fetch(`${base}/api/orgs/${coopOrg.org.id}/members`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json', 'x-owner-id': 'intruder' },
+    body: JSON.stringify({ memberId: 'farmer-2' }),
+  })).json();
+  check('member add protected', addDenied.error === 'not allowed');
+  const wsMember = await (await fetch(`${base}/api/orgs/mine`, { headers: { 'x-owner-id': 'farmer-1' } })).json();
+  check('member sees co-op workspace', wsMember.org && wsMember.role === 'member' && wsMember.org.memberCount === 1, JSON.stringify(wsMember).slice(0, 140));
+  const wsLead = await (await fetch(`${base}/api/orgs/mine`, { headers: { 'x-owner-id': 'coopLead-1' } })).json();
+  check('leader workspace totals', wsLead.role === 'leader' && wsLead.workspaceTotal && typeof wsLead.workspaceTotal.programs === 'number', JSON.stringify(wsLead.workspaceTotal));
+  const rmDenied = await (await fetch(`${base}/api/orgs/${coopOrg.org.id}/members/x`, { method: 'DELETE', headers: { 'x-owner-id': 'farmer-1' } })).json();
+  check('member cannot remove others', rmDenied.error === 'not allowed');
+
+  // 26. R13 insights (anonymised) + moderation bundle (admin)
+  const ins = await (await fetch(`${base}/api/insights`)).json();
+  check('insights anonymised aggregates', typeof ins.traffic.totalMessages === 'number' && Array.isArray(ins.marketplace.byCategory) === false && ins.knowledge.topics >= 70, JSON.stringify(ins).slice(0, 120));
+  const insRaw = JSON.stringify(ins);
+  check('insights no raw text leaked', !/Neo Farm|Mochudi|buyer@example/.test(insRaw) && !insRaw.includes('\"text\":'));
+  const mod = await (await fetch(`${base}/api/admin/moderation`, { headers: { 'x-admin-token': 'smoke-admin' } })).json();
+  check('moderation bundle', Array.isArray(mod.flaggedListings) && Array.isArray(mod.unanswered) && mod.feedbackStats && mod.flaggedListings.length >= 0);
+  const progRep = await (await fetch(`${base}/api/programs/${progId}/report`, { method: 'POST' })).json();
+  check('programme report flags', progRep.ok === true && progRep.flags === 1);
+  const mod2 = await (await fetch(`${base}/api/admin/moderation`, { headers: { 'x-admin-token': 'smoke-admin' } })).json();
+  check('moderation sees flag', mod2.flaggedProgrammes.some((x) => x.id === progId));
+
+  // 27. R16 settlement statement + photo upload (R18)
+  const stmt = await (await fetch(`${base}/api/programs/${progId}/settlement-statement`, { headers: { 'x-owner-id': 'buyer-1' } })).text();
+  check('settlement statement html', stmt.includes('<!DOCTYPE html>') && stmt.includes('settlement statement') && stmt.includes('PLP-2027-01'));
+  const stmtDenied = await (await fetch(`${base}/api/programs/${progId}/settlement-statement`)).json();
+  check('settlement statement protected', /not allowed/.test(stmtDenied.error || ''));
+  const tinyPng = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+  const photo = await (await fetch(`${base}/api/photos`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ image: 'data:image/png;base64,' + tinyPng, sessionId: sid, question: 'suspicious leaf' }),
+  })).json();
+  check('photo uploaded to review queue', photo.ok === true && /^\/uploads\//.test(photo.record.image), JSON.stringify(photo));
+  const photoBad = await (await fetch(`${base}/api/photos`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ image: 'data:image/png;base64,aGVsbG8=' }),
+  })).json();
+  check('fake image rejected by magic bytes', !!photoBad.error);
+  const upResp = await fetch(base + photo.record.image);
+  check('photo served same-origin', upResp.status === 200);
+  const mod3 = await (await fetch(`${base}/api/admin/moderation`, { headers: { 'x-admin-token': 'smoke-admin' } })).json();
+  check('photo in moderation queue', (mod3.photoQuestions || []).some((x) => x.image === photo.record.image));
+
   // 24. history persisted
   const hist = await (await fetch(`${base}/api/history/${sid}`)).json();
   check('history stored', Array.isArray(hist.history) && hist.history.length >= 4, `len=${hist.history.length}`);
@@ -416,5 +490,6 @@ async function chat(message, name) {
   server.close(() => process.exit(0));
 })().catch((err) => {
   console.error('\nSMOKE TEST FAILED:', err.message);
+  if (process.env.SMOKE_STACK) console.error(err.stack);
   server.close(() => process.exit(1));
 });

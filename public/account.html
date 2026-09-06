@@ -169,6 +169,43 @@
         $('assets').innerHTML = '<tr><td>Programmes</td><td>' + (a.programs || 0) + '</td></tr>' +
           '<tr><td>Marketplace listings</td><td>' + (a.listings || 0) + '</td></tr>' +
           '<tr><td>Tourism experiences</td><td>' + (a.experiences || 0) + '</td></tr>';
+
+        // co-op workspace: members + aggregates for the leader
+        const ws = r.workspaceTotal;
+        const memBox = document.createElement('div');
+        memBox.innerHTML = (r.role === 'leader')
+          ? '<h4 style="margin-top:14px;">🤝 Co-op workspace (' + r.org.memberCount + ' member' + (r.org.memberCount === 1 ? '' : 's') + ')</h4>' +
+            (ws ? '<p class="fine">Workspace totals: ' + ws.programs + ' programmes · ' + ws.listings + ' listings · ' + ws.experiences + ' experiences</p>' : '') +
+            '<div class="mem-add" style="display:flex; gap:.5rem; margin: .4rem 0; flex-wrap:wrap;">' +
+            '<input id="memId" placeholder="Member account id (their My-account id) *" style="flex:2;" />' +
+            '<button class="btn btn-primary" id="memAddBtn" style="padding:.45rem .9rem; font-size:.85rem;">Add member</button></div>' +
+            '<div id="memList" class="fine"></div>'
+          : (r.role === 'member'
+            ? '<h4 style="margin-top:14px;">🤝 You are a member of this co-op workspace</h4><p class="fine">Your listings/applications count toward the group; contact your leader to be removed.</p>'
+            : '');
+        const assetsBox = $('assetsBox');
+        assetsBox.appendChild(memBox);
+        if (r.role === 'leader') {
+          const mlist = (r.org.members || []).map((m) =>
+            '<div style="display:flex; justify-content:space-between; padding:.2rem 0;"><span>' + esc(m.id) + ' (' + esc(m.role) + ')</span>' +
+            '<button class="del" data-rm="' + esc(m.id) + '">✕ remove</button></div>').join('');
+          $('memList').innerHTML = mlist || '<p class="fine">No members yet.</p>';
+          document.querySelectorAll('[data-rm]').forEach((b) => b.addEventListener('click', async () => {
+            await fetch('/api/orgs/' + r.org.id + '/members/' + encodeURIComponent(b.dataset.rm), { method: 'DELETE', headers: { 'x-owner-id': ownerId } });
+            loadOrg();
+          }));
+          const addBtn = $('memAddBtn');
+          if (addBtn) addBtn.addEventListener('click', async () => {
+            const mid = $('memId').value.trim();
+            if (!mid) return;
+            const rr = await (await fetch('/api/orgs/' + r.org.id + '/members', {
+              method: 'POST', headers: { 'Content-Type': 'application/json', 'x-owner-id': ownerId },
+              body: JSON.stringify({ memberId: mid, role: 'member' }),
+            })).json();
+            alert(rr.ok ? 'Member added to the workspace.' : (rr.error || 'Failed'));
+            if (rr.ok) loadOrg();
+          });
+        }
       }
     } catch (_) { /* not registered yet — show the form */ }
   }

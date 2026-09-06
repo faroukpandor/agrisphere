@@ -273,6 +273,7 @@ function addDelivery(id, body, requesterId, adminToken) {
     quality: clean(body.quality, 200),
     batchCode: clean(body.batchCode, 60),
     notes: clean(body.notes, 300),
+    image: String(body.image || '').trim().slice(0, 240),
     addedBy: clean(requesterId, 60),
     at: Date.now(),
   };

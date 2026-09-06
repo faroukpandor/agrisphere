@@ -177,7 +177,8 @@
               '<button class="btn btn-primary setGo" style="padding:.35rem .8rem; font-size:.85rem;">Record settlement</button></div>'
             : '<p class="ok-note">✅ Settled ' + (p.settlement && p.settlement.amount ? '— ' + esc(p.settlement.amount) + ' (' + esc(p.settlement.method || '') + ')' : '') + '</p>') +
 
-          '<div class="mg-row"><a class="btn btn-ghost2" href="/api/programs/' + id + '/compliance-pack?format=html" target="_blank" rel="noopener">📜 Compliance readiness pack (print / PDF)</a></div>';
+          '<div class="mg-row"><a class="btn btn-ghost2" href="/api/programs/' + id + '/compliance-pack?format=html" target="_blank" rel="noopener">📜 Compliance pack</a> ' +
+          '<a class="btn btn-ghost2" href="/api/programs/' + id + '/settlement-statement" target="_blank" rel="noopener">🤝 Settlement statement (print)</a></div>';
 
         out.querySelector('.stGo').addEventListener('click', async () => {
           const r = await mgmtApi('POST', '/api/programs/' + id + '/status', { status: out.querySelector('.stSel').value });

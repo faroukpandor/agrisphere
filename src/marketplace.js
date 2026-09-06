@@ -16,6 +16,7 @@ const crypto = require('crypto');
 const store = require('./store');
 const config = require('./config');
 const ratings = require('./ratings');
+const orgs = require('./orgs');
 
 const CATEGORIES = [
   'produce',    // grain, vegetables, fruit, eggs, milk...
@@ -92,7 +93,7 @@ function create({ category, title, description, price, location, contact, ownerI
   if (!con) return { error: 'a contact method is required' };
   const owner = String(ownerId || '').slice(0, 80) || crypto.randomUUID();
   const profile = store.getSession(owner);
-  const org = store.orgs.find((o) => o.ownerId === owner);
+  const org = orgs.orgOf(owner);
 
   const owned = store.listings.filter((l) => l.ownerId === owner).length;
   if (owned >= MAX_LISTINGS_PER_OWNER) {

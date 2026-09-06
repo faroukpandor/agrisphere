@@ -131,6 +131,44 @@
     }
   }
 
+  // ---- photo capture (R18): send to human review queue ----
+  const camBtn = document.getElementById('camBtn');
+  const camFile = document.getElementById('camFile');
+  if (camBtn && camFile) {
+    camBtn.addEventListener('click', () => camFile.click());
+    camFile.addEventListener('change', async () => {
+      const f = camFile.files && camFile.files[0];
+      camFile.value = '';
+      if (!f) return;
+      if (busy) return;
+      if (f.size > 2500000) { addMessage('bot', renderText('📷 Photo too large — please send one under ~2.5 MB (or a smaller/compressed shot).')); return; }
+      busy = true;
+      addMessage('user', renderText('📷 [photo: ' + (f.name || 'plant photo') + ']'));
+      const typing = addTyping();
+      const reader = new FileReader();
+      reader.onload = async () => {
+        try {
+          const resp = await fetch('/api/photos', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ image: String(reader.result).slice(0, 3400000), sessionId, channel: 'web', question: 'photo from web chat' }),
+          });
+          typing.remove();
+          const data = await resp.json().catch(() => ({}));
+          if (!resp.ok || !data.ok) throw new Error((data && data.error) || 'HTTP ' + resp.status);
+          addMessage('bot', renderText(data.reply || '📷 Photo received.'));
+          renderSuggestions(QUICK);
+        } catch (_) {
+          typing.remove();
+          addMessage('bot', renderText('😔 Could not upload the photo — try again, or take it to your extension officer directly.'));
+          renderSuggestions(QUICK);
+        } finally { busy = false; }
+      };
+      reader.onerror = () => { typing.remove(); busy = false; addMessage('bot', renderText('😔 Could not read that file.')); };
+      reader.readAsDataURL(f);
+    });
+  }
+
   function welcome() {
     renderSuggestions(QUICK);
     scrollDown();

@@ -148,7 +148,9 @@
 
     <form id="chatForm" class="composer" autocomplete="off">
       <input id="input" type="text" placeholder="Ask anything… e.g. “my maize has yellow stripes”" aria-label="Message AgriSphere" maxlength="600" />
+      <button id="camBtn" type="button" class="btn-cam" aria-label="Send a photo" title="Send a plant/field photo to the human review queue">📷</button>
       <button id="sendBtn" class="btn-send" type="submit" aria-label="Send">➤</button>
+      <input id="camFile" type="file" accept="image/*" capture="environment" hidden />
     </form>
     <p class="chat-foot">I give general guidance only — always confirm with your local extension officer or agro-dealer. Open source under GPL-3.0.</p>
   </div>

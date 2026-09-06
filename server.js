@@ -39,13 +39,17 @@ const notify = require('./src/notify');
 const compliance = require('./src/compliance');
 const ussd = require('./src/ussd');
 const topicsD = require('./src/topics-d');
+const insights = require('./src/insights');
+const uploads = require('./src/uploads');
 
 const TOPIC_COUNT = KB.entries.length + topicsD.entries.length;
 
 const app = express();
 app.disable('x-powered-by');
-app.use(express.json({ limit: '1mb' }));
+app.use(express.json({ limit: '4mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
+// same-origin photo evidence (R18): DATA_DIR/uploads
+app.use('/uploads', express.static(path.join(config.DATA_DIR, 'uploads'), { maxAge: '7d' }));
 
 const ok = (res, data, code = 200) => res.status(code).json(data);
 const fail = (res, msg, code = 400) => res.status(code).json({ error: msg });
@@ -430,20 +434,32 @@ app.post('/api/orgs/register', (req, res) => {
 
 app.get('/api/orgs/mine', (req, res) => {
   const ownerId = String(req.headers['x-owner-id'] || '');
-  const org = orgs.findByOwner(ownerId);
-  if (!org) return fail(res, 'no organisation for this owner', 404);
-  ok(res, { org, assets: orgs.assetsOf(ownerId) });
+  const ws = orgs.workspace(ownerId);
+  if (ws.error) return fail(res, ws.error, ws.code || 404);
+  ok(res, ws);
 });
 
 app.post('/api/orgs/:id/verify', adminGuard, (req, res) => {
   const r = orgs.verifyOrg(String(req.params.id), req.headers['x-admin-token'] || '');
   if (r.error) return fail(res, r.error, r.code || 400);
-  store.bump('orgs.verified');
   ok(res, r);
 });
 
 app.get('/api/orgs', adminGuard, (req, res) => {
   ok(res, { types: orgs.ORG_TYPES, orgs: orgs.listAll(req.headers['x-admin-token'] || '') });
+});
+
+app.post('/api/orgs/:id/members', (req, res) => {
+  const b = req.body || {};
+  const r = orgs.addMember(String(req.params.id), req.headers['x-owner-id'] || '', req.headers['x-admin-token'] || '', b.memberId, b.role);
+  if (r.error) return fail(res, r.error, r.code || 400);
+  ok(res, r, 201);
+});
+
+app.delete('/api/orgs/:id/members/:memberId', (req, res) => {
+  const r = orgs.removeMember(String(req.params.id), req.headers['x-owner-id'] || '', req.headers['x-admin-token'] || '', String(req.params.memberId));
+  if (r.error) return fail(res, r.error, r.code || 400);
+  ok(res, r);
 });
 
 app.get('/api/orgs/assets', (req, res) => {
@@ -502,7 +518,13 @@ app.post('/api/programs/:id/milestones/:idx', async (req, res) => {
 
 app.post('/api/programs/:id/deliveries', async (req, res) => {
   const b = req.body || {};
-  const r = programs.addDelivery(String(req.params.id), { ...b, qty: b.qty, date: b.date, unit: b.unit, quality: b.quality, batchCode: b.batchCode, notes: b.notes }, req.headers['x-owner-id'] || '', req.headers['x-admin-token'] || '');
+  let imageUrl = b.image || '';
+  if (b.imageBase64) {
+    const saved = uploads.saveImage(b.imageBase64);
+    if (saved.error) return fail(res, saved.error);
+    imageUrl = saved.url;
+  }
+  const r = programs.addDelivery(String(req.params.id), { ...b, qty: b.qty, date: b.date, unit: b.unit, quality: b.quality, batchCode: b.batchCode, notes: b.notes, image: imageUrl }, req.headers['x-owner-id'] || '', req.headers['x-admin-token'] || '');
   if (r.error) return fail(res, r.error, r.code || 400);
   const p = store.programs.find((x) => x.id === String(req.params.id));
   try { await notify.fireOn(`${p ? p.title : 'programme'} delivery recorded (${r.delivery.qty}${r.delivery.unit ? ' ' + r.delivery.unit : ''})`, 'delivery'); } catch (_) {}
@@ -550,6 +572,75 @@ app.get('/api/programs/:id/compliance-pack', (req, res) => {
     return res.send(compliance.renderHtml(pack));
   }
   ok(res, { pack: { generatedAt: pack.generatedAt, programme: pack.programme, producer: pack.producer, deliveries: pack.deliveries, checklist: pack.checklist, knowledgeHints: pack.knowledgeHints, disclaimer: pack.disclaimer }, html: compliance.renderHtml(pack) });
+});
+
+// ---------------------------------------------------------------------------
+// Anonymised insights (R13) — aggregates only, no PII, no raw text
+// ---------------------------------------------------------------------------
+app.get('/api/insights', (req, res) => {
+  ok(res, insights.publicInsights());
+});
+
+// ---------------------------------------------------------------------------
+// Photo capture (R18) — honest path: stored for the human review queue and
+// delivery evidence. No AI-vision claims; diagnosis needs a person.
+// ---------------------------------------------------------------------------
+app.post('/api/photos', (req, res) => {
+  const b = req.body || {};
+  const saved = uploads.saveImage(b.image);
+  if (saved.error) return fail(res, saved.error);
+  const rec = {
+    id: crypto.randomUUID(),
+    at: Date.now(),
+    sessionId: String(b.sessionId || req.headers['x-session-id'] || '').slice(0, 80),
+    channel: String(b.channel || 'web').slice(0, 20),
+    text: String(b.question || '').slice(0, 300),
+    image: saved.url,
+    answered: false,
+  };
+  store.photoQuestions = store.photoQuestions || [];
+  store.photoQuestions.push(rec);
+  store._scheduleFlush();
+  store.bump('photos.total');
+  const reply =
+    '📷 Photo received' + (rec.text ? ' with your note: "' + rec.text.slice(0, 80) + '"' : '') +
+    ' — it is in the human review queue for an agronomist/extension check. ' +
+    'Honest note: the assistant does not claim to read photos yet; for a fast field diagnosis, take this photo to your extension officer or vet.';
+  ok(res, { ok: true, record: { id: rec.id, image: rec.image }, reply }, 201);
+});
+
+// ---------------------------------------------------------------------------
+// Moderation & human-in-loop bundle (R14) — ADMIN_TOKEN protected
+// ---------------------------------------------------------------------------
+app.get('/api/admin/moderation', adminGuard, (req, res) => {
+  ok(res, insights.moderationBundle());
+});
+
+app.post('/api/programs/:id/report', (req, res) => {
+  const p = store.programs.find((x) => x.id === String(req.params.id));
+  if (!p) return fail(res, 'programme not found', 404);
+  p.flags = (p.flags || 0) + 1;
+  store._scheduleFlush();
+  store.bump('programs.reports');
+  ok(res, { ok: true, flags: p.flags });
+});
+
+app.get('/api/programs/:id/settlement-statement', (req, res) => {
+  const raw = store.programs.find((x) => x.id === String(req.params.id));
+  if (!raw) return fail(res, 'programme not found', 404);
+  const caller = String(req.headers['x-owner-id'] || '');
+  const isAdmin = config.ADMIN_TOKEN && req.headers['x-admin-token'] === config.ADMIN_TOKEN;
+  const isOwner = raw.ownerId === caller;
+  const appRow = (raw.applications || []).find((a) => a.farmerId === caller);
+  if (!isOwner && !appRow && !isAdmin) return fail(res, 'not allowed — programme owner, participating producer or admin only', 403);
+  const st = compliance.buildSettlementStatement({
+    program: raw,
+    deliveries: raw.deliveries || [],
+    settlement: raw.settlement || null,
+    disputes: raw.disputes || [],
+  });
+  res.set('Content-Type', 'text/html; charset=utf-8');
+  return res.send(compliance.renderStatementHtml(st));
 });
 
 // ---------------------------------------------------------------------------

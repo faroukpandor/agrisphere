@@ -18,3 +18,4 @@ data/*.json
 .smoke-data/
 *.sqlite
 *.sqlite-journal
+data/uploads/

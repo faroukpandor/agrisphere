@@ -71,6 +71,11 @@
       </div>
     </div>
 
+    <div class="box">
+      <h3>🛡️ Moderation queue (flags &amp; photos)</h3>
+      <div id="mod" class="warn">Loading…</div>
+    </div>
+
     <div class="grid2">
       <div class="box">
         <h3>💰 Load official price bulletin</h3>
@@ -129,7 +134,7 @@
   else if (localStorage.getItem(tokenKey)) { $('token').value = localStorage.getItem(tokenKey); }
 
   async function loadAll() {
-    loadQueue(); loadLearned(); loadRefs(); loadOrgs(); loadDigest();
+    loadQueue(); loadLearned(); loadRefs(); loadOrgs(); loadDigest(); loadMod();
   }
 
   async function loadQueue() {
@@ -166,6 +171,25 @@
       loadLearned();
     }
   });
+
+  async function loadMod() {
+    try {
+      const d = await (await fetch('/api/admin/moderation', { headers: A() })).json();
+      const esc2 = esc;
+      const flaggedL = (d.flaggedListings || []).map((x) => '<div class="row">🚩 Listing: <strong>' + esc2(x.title) + '</strong> <span class="meta">' + x.flags + '× · ' + esc2(x.category) + '</span></div>').join('');
+      const flaggedE = (d.flaggedExperiences || []).map((x) => '<div class="row">🚩 Experience: <strong>' + esc2(x.title) + '</strong> <span class="meta">' + x.flags + '× · ' + esc2(x.partner) + '</span></div>').join('');
+      const flaggedP = (d.flaggedProgrammes || []).map((x) => '<div class="row">🚩 Programme: <strong>' + esc2(x.title) + '</strong> <span class="meta">' + x.flags + '×</span></div>').join('');
+      const photos = (d.photoQuestions || []).map((p) =>
+        '<div class="row">📷 <a href="' + esc2(p.image) + '" target="_blank" rel="noopener"><img src="' + esc2(p.image) + '" width="70" style="border-radius:8px; vertical-align:middle;" /></a> ' +
+        (p.text ? '<span class="meta">' + esc2(p.text) + '</span>' : '') +
+        ' <span class="meta">' + (p.channel || 'web') + ' · ' + new Date(p.at).toLocaleString() + '</span></div>').join('');
+      const fb = (d.feedback || []).slice(0, 12).map((f) => '<div class="row">' + (f.good ? '👍' : '👎') + ' <span class="meta">' + esc2(f.comment || f.recordId || '') + '</span></div>').join('');
+      $('mod').innerHTML =
+        '<h4 style="margin-top:0;">Flagged content</h4>' + (flaggedL + flaggedE + flaggedP || '<div class="ok">Nothing flagged.</div>') +
+        '<h4>📷 Photo review queue (' + (d.photos ? d.photos.unanswered : 0) + ' unanswered)</h4>' + (photos || '<div class="ok">No photos yet.</div>') +
+        '<h4>Feedback (' + (d.feedbackStats ? d.feedbackStats.good + '👍 / ' + d.feedbackStats.bad + '👎' : '') + ')</h4>' + (fb || '<div class="ok">No feedback yet.</div>');
+    } catch (_) { $('mod').innerHTML = '<div class="warn">Could not load moderation (token?).</div>'; }
+  }
 
   async function loadRefs() {
     try {

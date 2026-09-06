@@ -21,6 +21,7 @@ const config = require('./config');
 const COLLECTIONS = [
   'learned', 'feedback', 'unanswered', 'listings', 'programs', 'experiences',
   'bizplans', 'sessions', 'stats', 'otps', 'ratings', 'priceRefs', 'orgs', 'alerts',
+  'photoQuestions',
 ];
 
 // ---------------------------------------------------------------------------
@@ -85,7 +86,7 @@ class Store {
     const defaults = {
       learned: [], feedback: [], unanswered: [], listings: [], programs: [],
       experiences: [], bizplans: [], otps: [], ratings: [], priceRefs: [],
-      orgs: [], alerts: [], sessions: {}, stats: {},
+      orgs: [], alerts: [], photoQuestions: [], sessions: {}, stats: {},
     };
     for (const name of COLLECTIONS) {
       if (this.backend.read(name) === undefined) this.backend.write(name, defaults[name] || {});

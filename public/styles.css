@@ -283,3 +283,8 @@ a { color: var(--green-700); }
 .btn-ghost2 { border: 1.5px solid var(--green-700); color: var(--green-900); border-radius: 999px; padding: .45rem 1rem; font-size: .86rem; font-weight: 700; text-decoration: none; display: inline-block; text-align: center; }
 .btn-ghost2:hover { background: var(--green-50); }
 .ok-note { background: var(--green-50); border: 1px solid #bbf7d0; color: var(--green-800); border-radius: 10px; padding: .5rem .7rem; font-size: .86rem; }
+
+/* ---------- photo capture button (R18) ---------- */
+.btn-cam { background: transparent; border: 0; color: var(--green-900); font-size: 1.15rem; cursor: pointer; padding: .2rem .15rem .2rem .55rem; }
+.btn-cam:hover { opacity: .7; }
+.composer .btn-cam { flex: 0 0 auto; }

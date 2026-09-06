@@ -63,7 +63,11 @@ extension & veterinary services). See **docs/COMPLIANCE.md** for the full framew
 | ⚙️ **Programme lifecycle** | Open → contracting → in-production → delivering → settled, with milestones, batch deliveries, dispute trail, settlement record and a printable **compliance readiness pack** (self-declared, not a certificate) |
 | 📟 **USSD engine** | Standard gateway request/response (`/api/ussd` + `/ussd.html` simulator) — any phone can ask, check prices, programmes, marketplace |
 | 👤 **Account hub** | `/account.html` — one browser identity across listings, applications, reviews, alerts & org |
-| 🛡️ **Admin console** | `/admin.html` — learning queue, teach verified answers, load bulletins, verify organisations |
+| 🛡️ **Admin console** | `/admin.html` — learning queue, teach verified answers, load bulletins, verify organisations, moderation queue (flags/photos/feedback) |
+| 🤝 **Co-op workspaces** | Org leaders add member accounts; member assets aggregate into workspace totals (consent + role scoping) |
+| 🧭 **Insights (anonymised)** | `/api/insights` — aggregate-only stats & demand terms; no raw text, names or ids |
+| 🤝 **Settlement statements** | Printable delivery manifest + settlement record per programme (`/api/programs/:id/settlement-statement`) — document layer only, never money handling |
+| 📸 **Photo review queue** | 📷 camera button in chat sends field/plant photos to the human moderation queue (honest path: no AI-vision claims); delivery evidence photos land in compliance packs & statements |
 | 📱 **Multi-channel** | Web + PWA, WhatsApp, Messenger, Telegram webhooks on one Express app |
 | 🔌 **Provider-independent AI** | Deterministic retrieval by default; optional grounded LLM via any OpenAI-compatible API |
 | 📲 **PWA / offline** | Installable; service worker caches the shell; works on low bandwidth |
@@ -90,7 +94,7 @@ extension & veterinary services). See **docs/COMPLIANCE.md** for the full framew
 ```bash
 npm install
 npm start      # → http://localhost:3000  (chat UI + /market.html)
-npm test       # 104 end-to-end assertions (smoke: chat, tracks, P0 platform layer)
+npm test       # 127 end-to-end assertions (smoke: chat, tracks, P0 platform layer, workspaces/insights/moderation/photos)
 ```
 
 ## 📱 Channel activation
@@ -120,6 +124,11 @@ develop end-to-end before activating.
 | `/api/ratings/:targetType/:targetId` · `/api/ratings/:id` | GET/DELETE | aggregates + moderation removal (admin) |
 | `/api/orgs/register` · `/api/orgs/mine` · `/api/orgs/assets` | POST/GET | organisations + one-show API key; `x-owner-id` scoping |
 | `/api/orgs` · `/api/orgs/:id/verify` | GET/POST | admin list & document-check verification |
+| `/api/orgs/:id/members` · `/api/orgs/:id/members/:memberId` | POST/DELETE | co-op workspace membership (leader/admin) |
+| `/api/insights` | GET | anonymised aggregates (no PII) |
+| `/api/admin/moderation` | GET | flagged content, photo queue, feedback (admin) |
+| `/api/programs/:id/settlement-statement` | GET | printable settlement statement (owner/applicant/admin) |
+| `/api/photos` | POST | data-URL image → human review queue (`/uploads/*` served) |
 | `/api/alerts` · `/api/alerts/subscribe` · `/api/alerts/:id` | GET/POST/DELETE | keyword alert subscriptions |
 | `/api/notify/digest` | GET | admin digest summary |
 | `/api/programs/:id/status` · `/milestones/:idx` · `/deliveries` · `/disputes` · `/disputes/:id/resolve` · `/settle` | POST | programme lifecycle engine (owner/admin) |

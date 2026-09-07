@@ -41,12 +41,34 @@ const ussd = require('./src/ussd');
 const topicsD = require('./src/topics-d');
 const insights = require('./src/insights');
 const uploads = require('./src/uploads');
+const dignity = require('./src/dignity');
+const geotrace = require('./src/geotrace');
+const backup = require('./src/backup');
 
 const TOPIC_COUNT = KB.entries.length + topicsD.entries.length;
 
 const app = express();
 app.disable('x-powered-by');
 app.use(express.json({ limit: '4mb' }));
+
+// Security headers (audit E4 close-out). CSP deliberately omitted: the static
+// UI still ships inline scripts/styles — revisit once assets are bundled.
+app.use((req, res, next) => {
+  res.set({
+    'X-Content-Type-Options': 'nosniff',
+    'X-Frame-Options': 'SAMEORIGIN',
+    'Referrer-Policy': 'strict-origin-when-cross-origin',
+    'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=()',
+    'Cross-Origin-Opener-Policy': 'same-origin',
+    'X-XSS-Protection': '0',
+  });
+  const fwdProto = String(req.headers['x-forwarded-proto'] || '').split(',')[0].trim();
+  if (fwdProto === 'https' || req.secure) {
+    res.set('Strict-Transport-Security', 'max-age=2592000');
+  }
+  next();
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
 // same-origin photo evidence (R18): DATA_DIR/uploads
 app.use('/uploads', express.static(path.join(config.DATA_DIR, 'uploads'), {
@@ -83,6 +105,8 @@ app.get('/healthz', (req, res) => {
     alerts: store.alerts.length,
     ratings: store.ratings.length,
     priceRefs: store.priceRefs.length,
+    holdings: (store.holdings || []).length,
+    consignments: (store.consignments || []).length,
     sessions: Object.keys(store.sessions).length,
     msgs: store.stats['msgs.total'] || 0,
     tnMsgs: store.stats['tn.msgs'] || 0,
@@ -91,6 +115,194 @@ app.get('/healthz', (req, res) => {
     dataDir: store.dir,
     ts: Date.now(),
   });
+});
+
+// ---------------------------------------------------------------------------
+// Public trust page (STRATEGY §8.4 item 3) — computed facts only, no hype.
+// ---------------------------------------------------------------------------
+app.get('/trust', (req, res) => {
+  const facts = {
+    engine: config.ENABLE_LLM ? 'local knowledge engine + grounded optional LLM' : 'local knowledge engine — zero external AI by default',
+    aiDiagnosisClaims: 'none — the assistant does not claim to diagnose crops from photos; photos go to a human review queue',
+    topics: TOPIC_COUNT,
+    learned: store.listLearned().length,
+    unansweredInQueue: store.unanswered.length,
+    feedbackGiven: store.stats['feedback.total'] || 0,
+    photosInReviewQueue: (store.photoQuestions || []).filter((p) => !p.answered).length,
+    verifiedOrganisations: store.orgs.filter((o) => o.verified).length,
+    optOutsHonoured: store.stats['alerts.optout-skipped'] || 0,
+    marketplaceListings: marketplace.stats().total,
+    geoHoldings: (store.holdings || []).length,
+    geoConsignments: (store.consignments || []).length,
+    channels: {
+      whatsapp: Boolean(config.WHATSAPP_TOKEN),
+      messenger: Boolean(config.FACEBOOK_PAGE_TOKEN),
+      telegram: Boolean(config.TELEGRAM_TOKEN),
+    },
+    language: config.DEFAULT_LANG,
+    contentStandards: [
+      'Answers come from a curated, reviewed knowledge base; nothing is fabricated at runtime.',
+      'Learned content (from users) is visible in the admin queue and moderated before it can mislead.',
+      'Prices shown are references loaded from official bulletins only (BAMB), never user-invented.',
+      'Finance guidance is advisory; AgriSphere does not lend, hold money, or underwrite.',
+      'Certification claims are never made — packs are self-declared readiness documents; audits happen at accredited bodies.',
+    ],
+    privacy: [
+      'Phone verification is consent-first (OTP). Every alert subscription can opt out and stays opted out.',
+      'Insights published from this platform are aggregate-only — no raw messages, no personal data.',
+      'Any account can export its data (GET /api/me/export) and delete itself (DELETE /api/me).',
+    ],
+    exportReadiness: geotrace.info().purpose,
+  };
+  if (req.query.format === 'json') {
+    res.set('Cache-Control', 'no-store');
+    return ok(res, facts);
+  }
+  const rows = (arr) => arr.map((x) => `<li>${x}</li>`).join('');
+  const chans = Object.entries(facts.channels)
+    .map(([k, v]) => `<li>${k}: ${v ? 'configured' : 'not yet configured on this instance'}</li>`).join('');
+  const html = `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"/>
+<title>Trust &amp; honesty page — AgriSphere</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<style>body{font-family:system-ui,sans-serif;max-width:780px;margin:2rem auto;padding:0 1.2rem;color:#1c2b21;line-height:1.55}
+h1{color:#14532d} h2{margin-top:2rem;color:#14532d} .card{background:#f4faf5;border:1px solid #d7e6d9;border-radius:10px;padding:1rem 1.2rem;margin:1rem 0}
+.muted{color:#4b5563;font-size:.95rem} a{color:#14532d}</style></head>
+<body><p><a href="/">← Back to AgriSphere</a></p>
+<h1>🌍🌱 Trust &amp; honesty page</h1>
+<p class="muted">Computed live from this running instance. No marketing numbers: these are the actual counters, or nothing.</p>
+<div class="card"><strong>Engine:</strong> ${facts.engine}<br/>
+<strong>AI photo-diagnosis claims:</strong> ${facts.aiDiagnosisClaims}<br/>
+<strong>Knowledge topics:</strong> ${facts.topics} · <strong>Learned Q&amp;A:</strong> ${facts.learned} ·
+<strong>Questions awaiting moderation:</strong> ${facts.unansweredInQueue} · <strong>Photos in human review:</strong> ${facts.photosInReviewQueue}</div>
+<h2>Content standards</h2><ul>${rows(facts.contentStandards)}</ul>
+<h2>Privacy &amp; data</h2><ul>${rows(facts.privacy)}</ul>
+<h2>Channels</h2><ul>${chans}</ul>
+<h2>Export compliance</h2><p>${facts.exportReadiness} See <code>/api/geotrace/info</code> for the self-declared limits.</p>
+<p class="muted">Format: <a href="/trust?format=json">/trust?format=json</a> · Source: repository docs (AUDIT.md, COMPLIANCE.md, STRATEGY.md) — all public.</p>
+</body></html>`;
+  res.set('Content-Type', 'text/html; charset=utf-8');
+  res.set('Cache-Control', 'no-store');
+  return res.send(html);
+});
+
+// ---------------------------------------------------------------------------
+// Data dignity (audit E-gap close-out): account export & erasure
+// ---------------------------------------------------------------------------
+app.get('/api/me/export', (req, res) => {
+  const r = dignity.collectFor(String(req.headers['x-owner-id'] || ''));
+  if (r.error) return fail(res, r.error + ' — the web app sends this header automatically from your session.', r.code || 400);
+  res.setHeader('Content-Disposition', `attachment; filename="agrisphere-export-${Date.now()}.json"`);
+  return ok(res, r);
+});
+
+app.delete('/api/me',
+  rateLimit({ windowMs: 15 * 60 * 1000, max: 6, name: 'me-erase', keyFn: (req) => String(req.headers['x-owner-id'] || '') }),
+  (req, res) => {
+  const ownerId = String(req.headers['x-owner-id'] || '');
+  if (!ownerId) return fail(res, 'an account identity is required (x-owner-id header)', 400);
+  const r = dignity.eraseFor(ownerId);
+  if (r.error) return fail(res, r.error, r.code || 400);
+  store.bump('dignity.erase.api');
+  return ok(res, r);
+});
+
+// ---------------------------------------------------------------------------
+// Geo-trace & EUDR readiness (W1) — consent-first holdings + consignments
+// ---------------------------------------------------------------------------
+app.get('/api/geotrace/info', (req, res) => ok(res, geotrace.info()));
+
+app.post('/api/geotrace/holdings', (req, res) => {
+  const b = req.body || {};
+  const r = geotrace.createHolding({
+    name: b.name, district: b.district, kind: b.kind, lat: b.lat, lng: b.lng,
+    notes: b.notes, consent: b.consent, sharedWith: b.sharedWith,
+    ownerId: b.ownerId || req.headers['x-owner-id'],
+  });
+  if (r.error) return fail(res, r.error, r.code || 400);
+  store.bump('geotrace.api.holdings.created');
+  ok(res, r, 201);
+});
+
+app.get('/api/geotrace/holdings', (req, res) => {
+  const r = geotrace.listHoldings(req.headers['x-owner-id'] || '', req.headers['x-admin-token'] || '');
+  ok(res, r);
+});
+
+app.delete('/api/geotrace/holdings/:id', (req, res) => {
+  const r = geotrace.deleteHolding(String(req.params.id), req.headers['x-owner-id'] || '', req.headers['x-admin-token'] || '');
+  if (r.error) return fail(res, r.error, r.code || 400);
+  ok(res, r);
+});
+
+app.post('/api/geotrace/holdings/:id/share', (req, res) => {
+  const r = geotrace.shareHolding(String(req.params.id), (req.body || {}).with, req.headers['x-owner-id'] || '');
+  if (r.error) return fail(res, r.error, r.code || 400);
+  ok(res, r);
+});
+
+app.post('/api/geotrace/consignments', (req, res) => {
+  const b = req.body || {};
+  const r = geotrace.createConsignment({
+    title: b.title, buyer: b.buyer, destination: b.destination, species: b.species,
+    programmeId: b.programmeId, ownerId: b.ownerId || req.headers['x-owner-id'],
+  });
+  if (r.error) return fail(res, r.error, r.code || 400);
+  store.bump('geotrace.api.consignments.created');
+  ok(res, r, 201);
+});
+
+app.get('/api/geotrace/consignments', (req, res) => {
+  const r = geotrace.listConsignments(req.headers['x-owner-id'] || '', req.headers['x-admin-token'] || '');
+  ok(res, r);
+});
+
+app.get('/api/geotrace/consignments/:id', (req, res) => {
+  const r = geotrace.getConsignment(String(req.params.id), req.headers['x-owner-id'] || '', req.headers['x-admin-token'] || '');
+  if (r.error) return fail(res, r.error, r.code || 400);
+  ok(res, r);
+});
+
+app.delete('/api/geotrace/consignments/:id', (req, res) => {
+  const r = geotrace.deleteConsignment(String(req.params.id), req.headers['x-owner-id'] || '', req.headers['x-admin-token'] || '');
+  if (r.error) return fail(res, r.error, r.code || 400);
+  ok(res, r);
+});
+
+app.post('/api/geotrace/consignments/:id/lots',
+  rateLimit({ windowMs: 60 * 60 * 1000, max: 60, name: 'geo-lots' }),
+  (req, res) => {
+  const b = req.body || {};
+  const r = geotrace.addLot(String(req.params.id), {
+    headCount: b.headCount, label: b.label, chain: b.chain,
+  }, req.headers['x-owner-id'] || '', req.headers['x-admin-token'] || '');
+  if (r.error) return fail(res, r.error, r.code || 400);
+  store.bump('geotrace.api.lots.added');
+  ok(res, r, 201);
+});
+
+app.get('/api/geotrace/consignments/:id/export', (req, res) => {
+  const id = String(req.params.id);
+  const format = String(req.query.format || 'json').toLowerCase();
+  if (format === 'csv') {
+    const r = geotrace.exportCsv(id, req.headers['x-owner-id'] || '', req.headers['x-admin-token'] || '');
+    if (r.error) return fail(res, r.error, r.code || 400);
+    res.set('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="agrisphere-eudr-ready-${id.slice(0, 8)}.csv"`);
+    return res.send(r.csv);
+  }
+  const r = geotrace.exportJson(id, req.headers['x-owner-id'] || '', req.headers['x-admin-token'] || '');
+  if (r.error) return fail(res, r.error, r.code || 400);
+  ok(res, r.json);
+});
+
+// ---------------------------------------------------------------------------
+// Admin backup (download full snapshot) — off-site copy step in the runbook
+// ---------------------------------------------------------------------------
+app.get('/api/admin/backup', adminGuard, (req, res) => {
+  const snap = backup.snapshot();
+  res.setHeader('Content-Disposition', `attachment; filename="agrisphere-backup-${Date.now()}.json"`);
+  store.bump('backups.api.downloads');
+  return ok(res, snap);
 });
 
 // ---------------------------------------------------------------------------
@@ -187,9 +399,13 @@ function timingSafeEq(a, b) {
 }
 
 // Admin token via header only — a token in the query string would leak into
-// access logs and browser history.
+// access logs and browser history. In production an unconfigured token is a
+// hard fail (no open admin surface); in dev it stays open for convenience.
 function adminGuard(req, res, next) {
-  if (!config.ADMIN_TOKEN) return next();
+  if (!config.ADMIN_TOKEN) {
+    if (config.NODE_ENV === 'production') return fail(res, 'admin token not configured — set ADMIN_TOKEN before deploying', 503);
+    return next();
+  }
   const t = req.headers['x-admin-token'];
   if (!t || !timingSafeEq(t, config.ADMIN_TOKEN)) return fail(res, 'unauthorized', 403);
   return next();
@@ -732,6 +948,7 @@ app.get('/api/ussd/simulate', (req, res) => {
 // WhatsApp webhook (Meta Cloud API)
 // ---------------------------------------------------------------------------
 app.get('/webhooks/whatsapp', (req, res) => {
+  if (!config.VERIFY_TOKEN) return fail(res, 'webhook verification not configured on this instance', 503);
   const mode = req.query['hub.mode'];
   const token = req.query['hub.verify_token'];
   const challenge = req.query['hub.challenge'];
@@ -756,6 +973,7 @@ app.post('/webhooks/whatsapp', async (req, res) => {
 // Messenger webhook
 // ---------------------------------------------------------------------------
 app.get('/webhooks/messenger', (req, res) => {
+  if (!config.VERIFY_TOKEN) return fail(res, 'webhook verification not configured on this instance', 503);
   const mode = req.query['hub.mode'];
   const token = req.query['hub.verify_token'];
   const challenge = req.query['hub.challenge'];
@@ -806,14 +1024,27 @@ app.use((err, req, res, next) => {
 // ---------------------------------------------------------------------------
 // Boot
 // ---------------------------------------------------------------------------
+const AUTO_BACKUP_MS = 6 * 60 * 60 * 1000; // every 6 hours while the process lives
+
 const server = app.listen(config.PORT, config.HOST, () => {
   store.bump('boots.total');
   console.log(`\n🌍🌱 ${config.BOT_NAME} is running`);
   console.log(`   Web UI     : http://localhost:${config.PORT}/`);
   console.log(`   Health     : http://localhost:${config.PORT}/healthz`);
+  console.log(`   Trust      : http://localhost:${config.PORT}/trust`);
   console.log(`   Engine     : ${config.ENABLE_LLM ? 'local KB + LLM (' + config.LLM_MODEL + ')' : 'local KB (self-learning)'}`);
   console.log(`   Channels   : whatsapp=${Boolean(config.WHATSAPP_TOKEN)} messenger=${Boolean(config.FACEBOOK_PAGE_TOKEN)} telegram=${Boolean(config.TELEGRAM_TOKEN)}`);
-  console.log(`   Knowledge  : ${TOPIC_COUNT} topics | learned: ${store.listLearned().length} | unanswered queue: ${store.unanswered.length} | backend: ${store.backendName}\n`);
+  console.log(`   Knowledge  : ${TOPIC_COUNT} topics | learned: ${store.listLearned().length} | unanswered queue: ${store.unanswered.length} | backend: ${store.backendName}`);
+  console.log(`   Production : data dir ${config.DATA_DIR} | backups every ${AUTO_BACKUP_MS / 3600000}h | geotrace holdings=${store.holdings.length} consignments=${store.consignments.length}\n`);
+
+  // Automatic on-disk snapshots (keeps newest BACKUP_KEEP). The disk makes
+  // restarts durable; download /api/admin/backup off-site per the runbook.
+  try {
+    backup.writeAuto();
+    setInterval(() => { backup.writeAuto(); }, AUTO_BACKUP_MS);
+  } catch (err) {
+    console.error('[backup] auto-backup unavailable:', err.message);
+  }
 });
 
 module.exports = server;

@@ -496,6 +496,136 @@ async function chat(message, name) {
   }
   check('otp rate limit returns 429', last.status === 429);
 
+  // 29. production hardening: security headers, /trust page, data dignity
+  const hdrs = await fetch(`${base}/healthz`);
+  check('nosniff header present', hdrs.headers.get('x-content-type-options') === 'nosniff');
+  check('x-frame-options header present', hdrs.headers.get('x-frame-options') === 'SAMEORIGIN');
+  check('referrer-policy header present', hdrs.headers.get('referrer-policy') === 'strict-origin-when-cross-origin');
+  check('permissions-policy header present', !!hdrs.headers.get('permissions-policy'));
+  check('cross-origin-opener-policy header present', hdrs.headers.get('cross-origin-opener-policy') === 'same-origin');
+  const trustHtml = await (await fetch(`${base}/trust`)).text();
+  check('trust page served', trustHtml.includes('Trust &amp; honesty page'));
+  const trustJson = await (await fetch(`${base}/trust?format=json`)).json();
+  check('trust json publishes engine facts', String(trustJson.engine).includes('local') && Array.isArray(trustJson.contentStandards) && Array.isArray(trustJson.privacy));
+  const dignityListing = await (await fetch(`${base}/api/marketplace/listings`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json', 'x-owner-id': 'dignity-owner' },
+    body: JSON.stringify({ category: 'produce', title: 'Dignity test listing', description: 'to be erased', price: 'P10', location: 'Gaborone', contact: '70000001' }),
+  })).json();
+  check('dignity: listing created for erase test', !dignityListing.error);
+  const exp1 = await (await fetch(`${base}/api/me/export`, { headers: { 'x-owner-id': 'dignity-owner' } })).json();
+  check('account export includes owned listing', !exp1.error && exp1.data.listings.length === 1);
+  const exp2 = await (await fetch(`${base}/api/me/export`, { headers: { 'x-owner-id': 'unknown-owner-x' } })).json();
+  check('account export handles unknown identity', !exp2.error && exp2.data.listings.length === 0);
+  const eras = await (await fetch(`${base}/api/me`, {
+    method: 'DELETE', headers: { 'x-owner-id': 'dignity-owner' },
+  })).json();
+  check('erasure removes session + listing', !eras.error && eras.erased.sessions === 1 && eras.erased.listings === 1, JSON.stringify(eras.erased));
+  const afterErase = await (await fetch(`${base}/api/marketplace/listings`)).json();
+  check('erased listing no longer listed', !(afterErase.listings || []).some((l) => l.title === 'Dignity test listing'));
+
+  // 30. geo-trace & EUDR readiness wedge (W1)
+  const geoInfo = await (await fetch(`${base}/api/geotrace/info`)).json();
+  check('geotrace info carries EUDR deadlines', geoInfo.deadline && geoInfo.deadline.largeMediumOperators === '2026-12-30' && geoInfo.deadline.microSmallOperators === '2027-06-30');
+  const noConsent = await (await fetch(`${base}/api/geotrace/holdings`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json', 'x-owner-id': 'geo-owner' },
+    body: JSON.stringify({ name: 'Consentless ranch', lat: -24.0, lng: 25.0 }),
+  })).json();
+  check('holding creation requires explicit consent', !!noConsent.error && /consent/i.test(noConsent.error));
+  const badCoord = await (await fetch(`${base}/api/geotrace/holdings`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json', 'x-owner-id': 'geo-owner' },
+    body: JSON.stringify({ name: 'Bad coords ranch', lat: 999, lng: 25.0, consent: true }),
+  })).json();
+  check('invalid coordinates rejected', !!badCoord.error);
+  const h1 = await (await fetch(`${base}/api/geotrace/holdings`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json', 'x-owner-id': 'geo-owner' },
+    body: JSON.stringify({ name: 'Smoke Ranch', district: 'Kweneng', kind: 'ranch', lat: -24.657, lng: 25.908, consent: true }),
+  })).json();
+  check('holding created with consent', !h1.error && String(h1.holding.ref).startsWith('H-'));
+  const h2 = await (await fetch(`${base}/api/geotrace/holdings`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json', 'x-owner-id': 'geo-owner-2' },
+    body: JSON.stringify({ name: 'Frans Feedlot', district: 'Kgatleng', kind: 'feedlot', lat: -24.3, lng: 26.2, consent: true }),
+  })).json();
+  check('second holding created (feedlot)', !h2.error);
+  const share = await (await fetch(`${base}/api/geotrace/holdings/${h2.holding.id}/share`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json', 'x-owner-id': 'geo-owner-2' },
+    body: JSON.stringify({ with: ['geo-owner'] }),
+  })).json();
+  check('holding owner can share with aggregator', share.ok === true);
+  const c1 = await (await fetch(`${base}/api/geotrace/consignments`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json', 'x-owner-id': 'geo-owner' },
+    body: JSON.stringify({ title: 'First EU lot', buyer: 'Example Importer GmbH', destination: 'EU' }),
+  })).json();
+  check('consignment created', !c1.error && String(c1.consignment.ref).startsWith('C-'));
+  const lot = await (await fetch(`${base}/api/geotrace/consignments/${c1.consignment.id}/lots`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json', 'x-owner-id': 'geo-owner' },
+    body: JSON.stringify({ headCount: 50, label: 'Steers batch A', chain: [
+      { holdingId: h1.holding.id, from: '2026-01-10' },
+      { holdingId: h2.holding.id, from: '2026-03-01', to: '2026-06-15' },
+    ] }),
+  })).json();
+  check('lot with shared-holding chain accepted', !lot.error && lot.lots === 1, JSON.stringify(lot.error || ''));
+  const overlap = await (await fetch(`${base}/api/geotrace/consignments/${c1.consignment.id}/lots`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json', 'x-owner-id': 'geo-owner' },
+    body: JSON.stringify({ headCount: 5, chain: [
+      { holdingId: h1.holding.id, from: '2026-01-01', to: '2026-02-01' },
+      { holdingId: h2.holding.id, from: '2026-01-20' },
+    ] }),
+  })).json();
+  check('overlapping chain periods rejected', !!overlap.error && /overlap/i.test(overlap.error));
+  const intruderConsignment = await (await fetch(`${base}/api/geotrace/consignments`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json', 'x-owner-id': 'intruder-owner' },
+    body: JSON.stringify({ title: 'Intruder consignment', buyer: 'X' }),
+  })).json();
+  const intruderLot = await (await fetch(`${base}/api/geotrace/consignments/${intruderConsignment.consignment.id}/lots`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json', 'x-owner-id': 'intruder-owner' },
+    body: JSON.stringify({ headCount: 3, chain: [{ holdingId: h1.holding.id, from: '2026-01-10' }] }),
+  })).json();
+  check('unshared holding chain rejected (consignment access also denied on others)', !!intruderLot.error && intruderLot.error.includes('not yours'));
+  const intruderDirect = await fetch(`${base}/api/geotrace/consignments/${c1.consignment.id}/lots`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json', 'x-owner-id': 'intruder-owner' },
+    body: JSON.stringify({ headCount: 3, chain: [{ holdingId: h1.holding.id, from: '2026-01-10' }] }),
+  });
+  check('intruder cannot add lots to someone else consignment', intruderDirect.status === 403);
+  const delIntruderC = await (await fetch(`${base}/api/geotrace/consignments/${intruderConsignment.consignment.id}`, {
+    method: 'DELETE', headers: { 'x-owner-id': 'intruder-owner' },
+  })).json();
+  check('intruder consignment cleaned up', delIntruderC.ok === true);
+  const csvResp = await fetch(`${base}/api/geotrace/consignments/${c1.consignment.id}/export?format=csv`, {
+    headers: { 'x-owner-id': 'geo-owner' },
+  });
+  const csvText = await csvResp.text();
+  check('csv readiness export served', csvResp.status === 200 && /text\/csv/.test(csvResp.headers.get('content-type') || ''));
+  check('csv has holding chain rows + self-declared disclaimer',
+    csvText.includes('Smoke Ranch') && csvText.includes('Frans Feedlot') && csvText.includes('50') && csvText.includes('NOT a TRACES'));
+  const jsonExport = await (await fetch(`${base}/api/geotrace/consignments/${c1.consignment.id}/export?format=json`, {
+    headers: { 'x-owner-id': 'geo-owner' },
+  })).json();
+  check('json export carries full chain + coordinates', jsonExport.consignment.lots.length === 1 && jsonExport.consignment.lots[0].chain.length === 2 && jsonExport.consignment.lots[0].chain[0].lat !== null);
+  const authzExport = await fetch(`${base}/api/geotrace/consignments/${c1.consignment.id}/export`, { headers: { 'x-owner-id': 'intruder-owner' } });
+  check('export denied to non-owner', authzExport.status === 403);
+  const delC = await (await fetch(`${base}/api/geotrace/consignments/${c1.consignment.id}`, {
+    method: 'DELETE', headers: { 'x-owner-id': 'geo-owner' },
+  })).json();
+  check('consignment deletable by owner', delC.ok === true);
+  const delH1 = await (await fetch(`${base}/api/geotrace/holdings/${h1.holding.id}`, {
+    method: 'DELETE', headers: { 'x-owner-id': 'geo-owner' },
+  })).json();
+  check('unreferenced holding deletable', delH1.ok === true);
+  const health2 = await (await fetch(`${base}/healthz`)).json();
+  check('healthz tracks geotrace counters', health2.holdings === 1 && health2.consignments === 0, JSON.stringify({ h: health2.holdings, c: health2.consignments }));
+
+  // 31. admin backup snapshot + auth
+  const bk = await (await fetch(`${base}/api/admin/backup`, { headers: { 'x-admin-token': 'smoke-admin' } })).json();
+  check('admin backup returns full snapshot', !bk.error && Array.isArray(bk.programs) && Array.isArray(bk.holdings) && bk.schema === 'backup/v1');
+  const bkDenied = await fetch(`${base}/api/admin/backup`);
+  check('backup requires admin token', bkDenied.status === 403);
+
+  // cleanup geo-owner-2 holding (keeps suite idempotent)
+  const delH2 = await (await fetch(`${base}/api/geotrace/holdings/${h2.holding.id}`, {
+    method: 'DELETE', headers: { 'x-owner-id': 'geo-owner-2' },
+  })).json();
+  check('second holding cleaned up', delH2.ok === true);
+
   // 24. history persisted
   const hist = await (await fetch(`${base}/api/history/${sid}`)).json();
   check('history stored', Array.isArray(hist.history) && hist.history.length >= 4, `len=${hist.history.length}`);

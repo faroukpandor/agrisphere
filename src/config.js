@@ -35,8 +35,10 @@ module.exports = {
   MATCH_THRESHOLD: Number(env.MATCH_THRESHOLD || 0.30),
   MAX_HISTORY: Number(env.MAX_HISTORY || 12),
 
-  // Webhook verification (WhatsApp & Messenger require it; Telegram uses a token path)
-  VERIFY_TOKEN: env.VERIFY_TOKEN || 'agrisphere-verify-2026',
+  // Webhook verification (WhatsApp & Messenger require it; Telegram uses a token path).
+  // Hardening: in production the token MUST be set explicitly — the dev default
+  // is only a convenience for local runs and is empty in production.
+  VERIFY_TOKEN: env.VERIFY_TOKEN || (env.NODE_ENV === 'production' ? '' : 'agrisphere-verify-2026'),
 
   // Channel tokens (leave unset to run in "dev echo" mode)
   WHATSAPP_TOKEN: env.WHATSAPP_TOKEN || '',

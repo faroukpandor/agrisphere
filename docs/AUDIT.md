@@ -189,3 +189,61 @@ updates: `docs/STRATEGY.md §§8–9`.*
 - **Subsidised-competitor entry into SADC** (Farmer.Chat-type via NGO windows): mitigate with nativity, commerce/compliance moat, and trust metrics — do not compete on free-AI spend.
 - **Grant dependency risk:** if W5 conversations stall, Y1 revenue leans on W1/W2; keep the pilot pipeline at ≥3 parallel conversations.
 - **Parastatal politics:** BAMB/BMC/MIRA collaborations are slow and public-procurement-bound; treat as 6–12-month horizons, not quarter outcomes.
+
+## 11. Production-readiness close-out (2026-09-07)
+
+*Supersedes the open code items of §8 and the operations verdict of §4 where
+they are resolved below. Deployment guidance: `docs/DEPLOY-RUNBOOK.md`.
+Decisions & dates: `docs/GOVERNANCE-LOG.md`.*
+
+### 11.1 Open findings → status
+| Finding (§4) | Status | Resolution |
+|---|---|---|
+| O1 — Render free-tier ephemeral filesystem (ops #1 blocker) | ✅ Resolved in code | `render.yaml` → paid plan + persistent disk at `/var/data`, `DATA_DIR=/var/data`; durability test procedure in runbook §4.6 (still to be executed on the real instance) |
+| O2/O3 — no backup path | ✅ Resolved | Auto snapshot every 6 h (keeps 10) + `GET /api/admin/backup` full dump for off-site copies; restore drill in runbook §5 |
+| E-gap — no account export/delete | ✅ Resolved | `GET /api/me/export` and `DELETE /api/me` (rate-limited); erasure removes photo files from disk; tested end-to-end in smoke suite |
+| E4 — security headers | ✅ Resolved | nosniff, SAMEORIGIN frame, referrer-policy, permissions-policy, COOP, HSTS behind HTTPS; CSP deferred (UI still ships inline assets) |
+| CI absent | ✅ Resolved (workflow in-repo) | `ops/ci.yml` — Node 20/22, syntax checks, smoke suite. Activation needs a GitHub connection with `workflows` permission: copy to `.github/workflows/ci.yml` per runbook §CI |
+| Admin/webhook surface in production | ✅ Hardened | No `ADMIN_TOKEN` in production → 503 on admin routes; no `VERIFY_TOKEN` in production → webhook verification refused (dev defaults no longer leak into prod) |
+| `render.yaml` free+production contradiction | ✅ Resolved | `plan: starter` + disk mount + `DATA_DIR`; comment documents the plan choice |
+| A-series (refactor debt) | ◐ Partial | Unchanged — refactors stay opportunistic; no new debt introduced |
+| Governance | ✅ Resolved | `docs/GOVERNANCE-LOG.md` created with cadence; in-repo review culture now has a home |
+
+### 11.2 New capability shipped (STRATEGY W1 — geo-trace & EUDR readiness)
+- Consent-first holdings (coordinates, district, kind; `consent: true`
+  required; consent timestamp stored).
+- Owner-controlled sharing of holdings with named accounts (co-op/aggregator
+  model) — replaceable list, revocable, max 5 partners.
+- Consignments + lots with **gapless holding chains** (open segments
+  auto-close at the next move; overlaps rejected; unshared holdings cannot be
+  referenced).
+- **Self-declared readiness export** (CSV with per-segment rows incl.
+  coordinates & periods, or structured JSON) carrying an explicit disclaimer:
+  not a certificate, not a TRACES due-diligence statement; legality
+  assessment remains the operator's duty. References the 30 Dec 2026 /
+  30 Jun 2027 deadlines and the need to watch EC implementing acts.
+- Full authorisation matrix tested (owner/admin/share/intruder) in the smoke
+  suite; geo-lot writes rate-limited.
+
+### 11.3 Revised verdicts (supersede §4 where lower)
+- Operations: **4/10 → 7.5/10** in code terms — durable disk, backups and
+  runbook exist; the remaining points sit with the operator (paid plan live,
+  durability test on the real instance, off-site backup discipline) and with
+  scaling design (single-instance by intent).
+- Data governance: **6.5 → 9/10** — export/erase shipped and tested; the
+  residual point is the DPA + entity [operator].
+- Security: **8/10 → 8.5/10** — headers + prod-only surface lock-down added;
+  no external pentest yet (recurring item, unchanged).
+
+### 11.4 Remaining to "100% deploy-ready" — all [operator] items, none code
+1. Entity registration + DPA + bank account; professional review of
+   `docs/templates/*` (runbook §1).
+2. First real deploy on the paid plan + §4 durability/restore drills.
+3. Channel tokens (WhatsApp test number first) and SMS provider for OTP.
+4. Three pilot LOIs re-ordered to export-chain/co-op/insurer (STRATEGY §9).
+5. BAMB bulletin republication permission; MoA/Temo Letlotlo conversation.
+6. Governance-log cadence discipline + monthly audit checklist re-runs.
+
+*Honesty note: with the codebase at this state the correct claim is
+"deploy-ready and verified by 164 automated assertions" — not "live" and not
+"externally audited". The runbook's staged launch order keeps it that way.*

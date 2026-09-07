@@ -165,7 +165,7 @@ library and implications: `docs/RESEARCH-2026-REFRESH.md`.
 | GFSI-benchmarked schemes (BRCGS etc.) | BMC Lobatse holds BRCGS Grade AA (2025); Maun halal-certified | EX2 row: buyer-required market-access certification readiness; audits only via accredited certifiers |
 | Market-access certification for faith-sensitive markets (Gulf/Asia orders) | Treated by Botswana's own industry analysis as a market-access instrument (e.g. National Independent Halal Trust audits for BMC UAE/GCC exports) | Framed non-confessionally as an export-market standard; AgriSphere never provides religious content or Arabic branding in product copy — certifiers are accredited third parties |
 | Index insurance (Pula-type PPPs) | Bayer × Pula Foundation: €10M targeting 10M farmers by 2030; satellite/weather triggers | AgriSphere educates, documents evidence kits and aggregates groups — never underwrites |
-| Customer protection & data | CGAP / GSMA mobile-money-style protection principles; UNGP business & human rights | Opt-out honoured end-to-end (chat + alert bus); insights are aggregate-only; per-user export/delete is roadmap P1 |
+| Customer protection & data | CGAP / GSMA mobile-money-style protection principles; UNGP business & human rights | Opt-out honoured end-to-end (chat + alert bus); insights are aggregate-only; **per-user export (`GET /api/me/export`) and erasure (`DELETE /api/me`) shipped 2026-09-07** (photo files removed from disk too) |
 | Land & tenure | FAO VGGT | Unchanged (§2) |
 | Climate/environment | FAO SAFA-style sustainability thinking | Content already covers NRM & adaptation; no carbon claims made |
 

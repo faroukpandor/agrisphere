@@ -199,6 +199,13 @@ photo review by people; published moderation).
 5. **Programme-to-export pipeline**: when a programme targets an export buyer, compliance
    pack auto-gains EX1/EX2 rows and IFA-v6/EUDR era references.
 
+*Shipped 2026-09-07 (see AUDIT §11 & governance log): item 1 (geo-trace data
+model + consignment export — live endpoints under /api/geotrace, consent-first,
+shared-holding chains, CSV/JSON self-declared exports), item 3 (/trust page with
+computed facts at /trust and /trust?format=json), item 5 (EX1/EX2 export rows now
+in the live compliance checklist). Items 2 & 4 stay pending external credentials
+(WhatsApp test number for voice demo; partner validation).*
+
 ### 8.5 Defer deliberately (unchanged + reasons)
 - AI photo *diagnosis* until a vet/agronomist partner validates accuracy on Botswana crops.
 - PSP/mobile-money hooks, insurance underwriting, lending — partnership-gated by law & ethics.

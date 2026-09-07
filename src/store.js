@@ -21,7 +21,7 @@ const config = require('./config');
 const COLLECTIONS = [
   'learned', 'feedback', 'unanswered', 'listings', 'programs', 'experiences',
   'bizplans', 'sessions', 'stats', 'otps', 'ratings', 'priceRefs', 'orgs', 'alerts',
-  'photoQuestions',
+  'photoQuestions', 'holdings', 'consignments',
 ];
 
 // ---------------------------------------------------------------------------
@@ -86,7 +86,8 @@ class Store {
     const defaults = {
       learned: [], feedback: [], unanswered: [], listings: [], programs: [],
       experiences: [], bizplans: [], otps: [], ratings: [], priceRefs: [],
-      orgs: [], alerts: [], photoQuestions: [], sessions: {}, stats: {},
+      orgs: [], alerts: [], photoQuestions: [], holdings: [], consignments: [],
+      sessions: {}, stats: {},
     };
     for (const name of COLLECTIONS) {
       if (this.backend.read(name) === undefined) this.backend.write(name, defaults[name] || {});
@@ -176,3 +177,4 @@ function norm(s) {
 
 module.exports = new Store();
 module.exports.Store = Store; // expose class for tests
+module.exports.COLLECTIONS = COLLECTIONS;

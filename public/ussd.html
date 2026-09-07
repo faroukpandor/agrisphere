@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>USSD demo — AgriSphere Every-Phone Menu</title>
+  <meta name="description" content="Try the AgriSphere USSD menu engine in your browser — the same session engine a network or aggregator can switch on for any phone, even a basic one." />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <meta name="theme-color" content="#14532d" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📟</text></svg>" />
+  <link rel="stylesheet" href="/styles.css" />
+  <style>
+    .phone { background: #0b2e1a; color: #fff; border-radius: 26px; padding: 22px; max-width: 480px; margin: 20px auto 0; box-shadow: var(--shadow); }
+    .screen { background: #d9f0dd; color: #12301f; border-radius: 10px; padding: 14px; min-height: 210px; font-size: .98rem; white-space: pre-wrap; font-family: ui-monospace, monospace; }
+    .screen .cursor { display: inline-block; width: 9px; height: 1.05em; background: #12301f; vertical-align: text-bottom; animation: blink 1.2s infinite; }
+    @keyframes blink { 0%,60% { opacity: 1; } 61%,100% { opacity: 0; } }
+    .keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 16px; }
+    .key { background: #14532d; border: 0; color: #fff; font-size: 1.2rem; font-weight: 700; border-radius: 12px; padding: .9rem 0; cursor: pointer; }
+    .key:hover { background: #16a34a; }
+    .key.wide { grid-column: span 3; background: #b91c1c; }
+    .box { background: #fff; border: 1px solid #e3efe6; border-radius: var(--radius); padding: 1.3rem; margin-top: 20px; box-shadow: var(--shadow); }
+    .hint { color: var(--muted); font-size: .88rem; }
+    .wrap2 { max-width: 760px; margin: 0 auto; }
+  </style>
+</head>
+<body>
+<header class="site-header">
+  <div class="wrap header-inner">
+    <a class="brand" href="/">
+      <span class="brand-logo">🌍🌱</span>
+      <span class="brand-name">AgriSphere <small>USSD demo</small></span>
+    </a>
+    <nav class="nav">
+      <a href="/prices.html">💰 Prices</a>
+      <a href="/market.html">🌾 Marketplace</a>
+      <a href="/programs.html">🤝 Buyer programmes</a>
+      <a href="/account.html">👤 My account</a>
+      <a href="/#chat">Chat</a>
+      <a class="nav-gh" href="https://github.com/faroukpandor/agrisphere" target="_blank" rel="noopener">GitHub ↗</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap wrap2" style="padding: 34px 20px 60px;">
+  <p class="eyebrow">📟 Every-phone access (R2)</p>
+  <h1>USSD menu — try it here</h1>
+  <p>This simulator drives the exact engine a network / USSD aggregator can mount (standard <code>sessionId + phoneNumber + text</code> request, <code>CON</code>/<code>END</code> responses). Type numbers like a real session: <strong>1</strong> ask · <strong>2</strong> prices · <strong>3</strong> programmes · <strong>4</strong> marketplace · <strong>5</strong> teach · <strong>6</strong> help, then follow the prompts and press <strong>#</strong> to finish an ask.</p>
+
+  <div class="phone">
+    <div class="screen" id="screen"></div>
+    <div class="keypad" id="keys"></div>
+  </div>
+
+  <div class="box">
+    <h3>How it works for operators</h3>
+    <p class="hint">POST <code>/api/ussd</code> with <code>{ sessionId, phoneNumber, text }</code> — the engine replies <code>CON …</code> to continue the session or <code>END …</code> to close it. Replies are truncated to stay inside USSD payload limits. The same brain and memory serve the web, WhatsApp and this menu, so lessons taught on any channel are learned once.</p>
+    <p class="hint">📞 Real deployments need a USSD shortcode from a network and an aggregator (e.g. Africa Talking) pointed at this endpoint — that is a partnership item, not code.</p>
+  </div>
+</main>
+
+<footer style="border-top:1px solid #e3efe6;" class="wrap">
+  <p class="fine" style="padding:16px 0;">AgriSphere · <a href="/#chat">Chat</a> · <a href="/prices.html">Prices</a> · <a href="/account.html">My account</a> · <a href="/admin.html">Admin</a></p>
+</footer>
+
+<script>
+(function () {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const screen = $('screen');
+  const sid = 'web-sim-' + String(Date.now());
+  let sessionActive = false;
+  let text = '';
+  const lines = [];
+  function pushLine(t) { lines.push(t); if (lines.length > 30) lines.shift(); }
+  function paint() { screen.textContent = lines.join('\n') + '\n' + (sessionActive ? text : ''); }
+
+  async function send(input, isText) {
+    if (isText) text += input;
+    try {
+      const r = await fetch('/api/ussd', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId: sid, phoneNumber: '+267' + String(Math.floor(10000000 + Math.random() * 89999999)), text: isText ? text : input }),
+      });
+      const body = await r.text();
+      const cont = body.startsWith('CON ');
+      sessionActive = cont;
+      const msg = body.slice(4);
+      lines.push(msg);
+      if (!cont) text = '';
+      paint();
+      if (!isText) renderKeys(msg);
+      if (cont && !isText) paint();
+    } catch (_) { lines.push('Network error — is the server running?'); paint(); }
+  }
+
+  function renderKeys(msg) {
+    const keys = $('keys');
+    const defs = [];
+    if (sessionActive) {
+      // menu screens: show matching numbered actions plus quick verbs
+      defs.push(['1', '1'], ['2', '2'], ['3', '3'], ['4', '4'], ['5', '5'], ['6', '6'], ['#', '#'], ['0', '0 ← menu'], ['End', 'end']);
+    } else {
+      defs.push(['Start', 'start']);
+    }
+    keys.innerHTML = '';
+    defs.forEach(([label, val]) => {
+      const b = document.createElement('button');
+      b.className = val === 'end' ? 'key wide' : 'key';
+      b.textContent = label;
+      b.addEventListener('click', async () => {
+        if (val === 'end') { sessionActive = false; text = ''; lines.push('— session ended —'); paint(); renderKeys(); return; }
+        if (val === 'start') { lines.length = 0; await send('', false); return; }
+        await send(val, false);
+      });
+      keys.appendChild(b);
+    });
+  }
+
+  // text input strip (simulated keypad text entry for ask/teach flows)
+  const strip = document.createElement('div');
+  strip.style.cssText = 'grid-column: span 3; display: flex; gap: 6px; margin-top: 4px;';
+  const inp = document.createElement('input');
+  inp.placeholder = '…or type free text (ask/teach)';
+  inp.style.cssText = 'flex: 1; padding: .6rem .7rem; border-radius: 10px; border: 0; font-size: .9rem;';
+  const go = document.createElement('button');
+  go.textContent = 'Send';
+  go.className = 'key';
+  go.style.cssText = 'padding: .6rem 1rem;';
+  strip.append(inp, go);
+  $('keys').appendChild(strip);
+  go.addEventListener('click', async () => {
+    const v = inp.value.trim();
+    inp.value = '';
+    if (!v) return;
+    await send(v, false); // engine accepts free text on ask step
+  });
+
+  send('', false);
+})();
+</script>
+</body>
+</html>

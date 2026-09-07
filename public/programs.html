@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Buyer-Led Production Programmes — AgriSphere</title>
+  <meta name="description" content="Structured buyer-led production programmes: buyers post transparent demand with fair terms; farmers and co-ops apply and get stage-gated production playbooks." />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <meta name="theme-color" content="#14532d" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤝</text></svg>" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap header-inner">
+    <a class="brand" href="/">
+      <span class="brand-logo">🌍🌱</span>
+      <span class="brand-name">AgriSphere <small>Buyer Programmes</small></span>
+    </a>
+    <nav class="nav">
+      <a href="/biz.html">📋 Start here</a>
+      <a href="/tourism.html">🧭 Agri-tourism</a>
+      <a href="/market.html">🌾 Marketplace</a>
+      <a href="/prices.html">💰 Prices</a>
+      <a href="/account.html">👤 My account</a>
+      <a href="/#chat">Chat</a>
+    </nav>
+  </div>
+</header>
+
+<section class="hero hero-short">
+  <div class="wrap hero-grid">
+    <div class="hero-copy">
+      <p class="eyebrow">🤝 Buyer-led production · transparent terms only</p>
+      <h1>When a buyer commits, farming becomes a business.</h1>
+      <p class="lede">
+        Serious buyers post structured demand — product, volume, quality specs, price formula,
+        advance &amp; delivery terms. Farmers and co-ops apply, then follow a
+        <strong>stage-gated production playbook</strong> with the assistant teaching every step.
+        Fair-terms rules are enforced before any programme is listed.
+      </p>
+      <p class="hero-note">AgriSphere is the facilitator &amp; document layer — contracts are between buyer and farmer; we never handle money.</p>
+    </div>
+  </div>
+</section>
+
+<section class="chat-section">
+  <div class="wrap market-wrap">
+
+    <details class="post-card" id="postBox">
+      <summary class="post-summary">🏢 I am a buyer — post a programme (fair-terms checklist required)</summary>
+      <form id="progForm" class="post-form">
+        <div class="frow">
+          <label>Organisation * <input id="pOrg" required maxlength="90" placeholder="e.g. Kgale Milling (Pty) Ltd" /></label>
+          <label>Programme title * <input id="pTitle" required maxlength="90" placeholder="e.g. 2027 white maize demand — Letlhakane cluster" /></label>
+        </div>
+        <div class="frow">
+          <label>Product * <input id="pProduct" required maxlength="60" placeholder="e.g. maize, groundnuts, tomatoes, poultry" /></label>
+          <label>Volume needed <input id="pVolume" maxlength="120" placeholder="e.g. 40 tonnes, grade A" /></label>
+        </div>
+        <label>Quality specs <textarea id="pQuality" rows="2" maxlength="400" placeholder="e.g. moisture ≤12.5%, clean, no weevils; or size/weight specs"></textarea></label>
+        <label>Price formula (written &amp; transparent) *
+          <input id="pPrice" required maxlength="300" placeholder="e.g. BAMB depot price on delivery week + P150/t quality bonus, floor P3,000/t" /></label>
+        <div class="frow">
+          <label>Advance / input credit offered <input id="pAdvance" maxlength="120" placeholder="e.g. 30% advance on signed contract" /></label>
+          <label>Payment timeline * <input id="pPay" required maxlength="120" placeholder="e.g. payment within 14 days of delivery" /></label>
+          <label>Delivery window <input id="pWindow" maxlength="120" placeholder="e.g. Feb–Mar 2027" /></label>
+        </div>
+        <div class="frow">
+          <label>Catchment / locations <input id="pLocations" maxlength="200" placeholder="e.g. Mahalapye, Palapye, Serowe" /></label>
+          <label>Contact (phone/WhatsApp/email) * <input id="pContact" required maxlength="120" /></label>
+        </div>
+        <label>Farmer requirements / who should apply
+          <textarea id="pReqs" rows="2" maxlength="400" placeholder="e.g. minimum 2 ha maize; records kept; co-op groups welcome"></textarea></label>
+        <div class="fair-terms">
+          <p><strong>Fair-terms confirmation (required):</strong> I confirm this programme will offer farmers —</p>
+          <ul id="fairList"></ul>
+          <label class="checkrow"><input type="checkbox" id="pFair" /> I agree to all of the above and to a written contract with each farmer.</label>
+        </div>
+        <div class="frow frow-actions">
+          <p class="fine">Programmes expire after 120 days. Applications go to you (your organisation's inbox view below).</p>
+          <button class="btn btn-primary" type="submit" id="postProgBtn">Post programme</button>
+        </div>
+        <p id="progMsg" class="post-msg" role="status"></p>
+      </form>
+    </details>
+
+    <div class="filter-row">
+      <div>
+        <input id="progQ" type="search" placeholder="Search programmes (product, buyer, area)…" />
+        <button id="progSearch" class="btn btn-ghost-dark">Search</button>
+      </div>
+      <span id="progCount" class="count-badge"></span>
+    </div>
+    <div id="programs" class="listing-grid" aria-live="polite"><p class="loading">Loading programmes…</p></div>
+    <p id="appsMsg" class="post-msg"></p>
+
+    <details id="applicationsBox" class="post-card" style="margin-top:18px">
+      <summary class="post-summary">📥 Applications I received (for programme owners — paste your programme ID)</summary>
+      <div class="post-form">
+        <div class="frow">
+          <input id="progIdLookup" placeholder="Programme ID from your posting confirmation" />
+          <button id="appsBtn" class="btn btn-ghost-dark">Load applications</button>
+        </div>
+        <div id="appsOut"></div>
+      </div>
+    </details>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <p>🌍🌱 <strong>AgriSphere Buyer Programmes</strong> — fairness first: no programme is listed without transparent price, advance and payment terms. <a href="/">← Back to the assistant</a></p>
+  </div>
+    <p class="fine">Platform: <a href="/prices.html">💰 Prices board</a> · <a href="/account.html">👤 My account &amp; organisations</a> · <a href="/ussd.html">📟 USSD demo</a> · <a href="/admin.html">🛡️ Admin console</a> · <a href="/market.html">🌾 Marketplace</a></p>
+</footer>
+
+<script>
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
+</script>
+<script src="/programs.js"></script>
+</body>
+</html>

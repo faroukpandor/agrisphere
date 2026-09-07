@@ -1,0 +1,2 @@
+# AgriSphere runtime state (sessions, learned lessons, feedback, unanswered queue)
+# is stored in this directory at runtime as JSON. Files are git-ignored.

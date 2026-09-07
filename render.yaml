@@ -1,0 +1,42 @@
+# Render Blueprint — production deploy configuration.
+#
+# Ops note (AUDIT.md O1, resolved 2026-09-07): the Render FREE plan has an
+# ephemeral filesystem that resets on every cold start — it is NOT suitable
+# for production state. This blueprint therefore:
+#   1. mounts a persistent Render Disk at /var/data, and
+#   2. sets DATA_DIR=/var/data so all store files, uploads and backups live
+#      on the disk.
+# Disks require a paid instance type — `starter` is the entry point. If
+# Render renames plans in your dashboard, pick the equivalent paid plan there.
+services:
+  - type: web
+    name: agrisphere
+    runtime: node
+    repo: https://github.com/faroukpandor/agrisphere
+    plan: starter
+    buildCommand: ""
+    startCommand: npm start
+    healthCheckPath: /healthz
+    autoDeploy: true
+    disk:
+      name: agrisphere-data
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATA_DIR
+        value: /var/data
+      - key: VERIFY_TOKEN
+        generateValue: true
+      - key: ADMIN_TOKEN
+        generateValue: true
+      # Secrets to add in the Render dashboard (never commit them):
+      # - TEACH_TOKEN                 # protects /api/teach
+      # - WHATSAPP_TOKEN              # Meta WhatsApp Cloud API
+      # - WHATSAPP_PHONE_ID
+      # - FACEBOOK_PAGE_TOKEN         # Messenger
+      # - TELEGRAM_TOKEN
+      # - SMS_PROVIDER_URL / SMS_PROVIDER_KEY   # OTP SMS delivery
+      # - OPENAI_API_KEY              # optional grounded LLM (off by default)
+      # - PSP_NAME / PSP_WEBHOOK_SECRET          # licensed PSP partner hooks

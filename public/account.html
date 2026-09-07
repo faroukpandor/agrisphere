@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My account — AgriSphere</title>
+  <meta name="description" content="AgriSphere account hub: verify your phone for the verified badge, manage price alerts, register your organisation (co-op, buyer, NGO…)." />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <meta name="theme-color" content="#14532d" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👤</text></svg>" />
+  <link rel="stylesheet" href="/styles.css" />
+  <style>
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 22px; }
+    @media (max-width: 760px) { .grid2 { grid-template-columns: 1fr; } }
+    .box { background: #fff; border: 1px solid #e3efe6; border-radius: var(--radius); padding: 1.4rem; box-shadow: var(--shadow); }
+    input, select, textarea { padding: .55rem .7rem; border: 1px solid #cfe0d3; border-radius: 10px; font-size: .92rem; width: 100%; background: #fff; margin-top: 6px; }
+    label { font-size: .85rem; font-weight: 700; color: var(--green-900); }
+    .btn { cursor: pointer; border: 0; margin-top: 10px; }
+    .badge-off { display: inline-block; background: #eee; color: #555; border-radius: 999px; padding: .2rem .8rem; font-size: .85rem; font-weight: 700; }
+    .badge-on { display: inline-block; background: var(--green-100); color: var(--green-900); border-radius: 999px; padding: .2rem .8rem; font-size: .85rem; font-weight: 700; }
+    .alert-row { display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed #e3efe6; padding: .5rem 0; font-size: .92rem; }
+    .del { background: none; border: 0; color: #b91c1c; cursor: pointer; font-size: .9rem; }
+    .msg { font-size: .85rem; margin-top: 6px; min-height: 1.1em; }
+    .idline { font-family: ui-monospace, monospace; font-size: .75rem; color: var(--muted); word-break: break-all; }
+    table.assets td { padding: .25rem .7rem .25rem 0; font-size: .92rem; }
+    table.assets td:first-child { color: var(--muted); }
+  </style>
+</head>
+<body>
+<header class="site-header">
+  <div class="wrap header-inner">
+    <a class="brand" href="/">
+      <span class="brand-logo">🌍🌱</span>
+      <span class="brand-name">AgriSphere <small>My account</small></span>
+    </a>
+    <nav class="nav">
+      <a href="/prices.html">💰 Prices</a>
+      <a href="/market.html">🌾 Marketplace</a>
+      <a href="/programs.html">🤝 Buyer programmes</a>
+      <a href="/account.html">👤 My account</a>
+      <a href="/#chat">Chat</a>
+      <a class="nav-gh" href="https://github.com/faroukpandor/agrisphere" target="_blank" rel="noopener">GitHub ↗</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap" style="padding: 34px 20px 60px;">
+  <p class="eyebrow">👤 One web identity per browser</p>
+  <h1>My account</h1>
+  <p class="fine">Your identity id is kept in this browser only — it is what links your listings, applications, reviews, alerts and organisation. We never sell or publish it.</p>
+
+  <div class="grid2">
+    <section class="box">
+      <h3>✅ Verified badge</h3>
+      <p class="fine">Verify your phone to earn the ✔ badge on your marketplace listings, programme applications and reviews. Verified farmers & buyers get priority in programme applications.</p>
+      <p id="badge" class="badge-off">Checking…</p>
+      <div id="otpForm" hidden>
+        <label for="phone">Phone number</label>
+        <input id="phone" placeholder="+267 71 234 567" />
+        <button class="btn btn-primary" id="reqBtn">Send verification code</button>
+        <div class="msg" id="reqMsg"></div>
+        <label for="code" id="codeLabel" hidden>One-time code</label>
+        <input id="code" placeholder="6-digit code" hidden />
+        <button class="btn btn-primary" id="verBtn" hidden>Verify code</button>
+        <div class="msg" id="verMsg"></div>
+      </div>
+      <p class="fine" style="margin-top:10px;">Consent-first: your number is used only to confirm identity. In preview mode the code is shown in the server log / returned to the page; in production it arrives by SMS.</p>
+    </section>
+
+    <section class="box">
+      <h3>🏢 Organisation account</h3>
+      <p class="fine">Buyers, co-ops, NGOs, extension offices, insurers, input suppliers and media register here. Organisations can be verified by the admin team, and verified org listings carry the badge automatically. Farmer features stay free; organisation tiers fund the platform.</p>
+      <div id="orgPanel">
+        <div class="msg" id="orgMsg"></div>
+        <label for="orgName">Organisation name *</label>
+        <input id="orgName" placeholder="e.g. Mochudi Youth Co-op" />
+        <label for="orgType">Type *</label>
+        <select id="orgType">
+          <option value="coop">Cooperative / union</option>
+          <option value="buyer">Buyer / processor / packhouse</option>
+          <option value="ngo">NGO / development</option>
+          <option value="extension">Extension / advisory</option>
+          <option value="insurer">Insurer / mutual pool</option>
+          <option value="input">Input supplier</option>
+          <option value="media">Media / content</option>
+          <option value="other">Other</option>
+        </select>
+        <label for="orgContact">Contact person &amp; details *</label>
+        <input id="orgContact" placeholder="Name · phone or email" />
+        <label for="orgArea">Area of operation</label>
+        <input id="orgArea" placeholder="e.g. Kgatleng" />
+        <label for="orgDesc">Short description</label>
+        <textarea id="orgDesc" rows="2" placeholder="Members, main activities…"></textarea>
+        <button class="btn btn-primary" id="orgBtn">Register organisation</button>
+      </div>
+      <div class="msg" id="orgResult"></div>
+      <div id="apiKeyBox" hidden style="background: var(--green-50); border: 1px dashed var(--green-600); border-radius: 10px; padding: .7rem; margin-top: 8px;">
+        <strong>🔑 API key — shown ONCE. Copy it now:</strong>
+        <div class="idline" id="apiKey"></div>
+      </div>
+      <div id="assetsBox" hidden>
+        <h4 style="margin-top:14px;">Your assets</h4>
+        <table class="assets" id="assets"></table>
+        <p class="fine">Programmes &amp; listings are managed from their own pages (📋 Start here / 🤝 Buyer programmes / 🌾 Marketplace).</p>
+      </div>
+    </section>
+  </div>
+
+  <section class="box" style="margin-top:18px;">
+    <h3>🔔 My price alerts</h3>
+    <p class="fine">Alerts you subscribed to (manage more on the <a href="/prices.html">Prices</a> page).</p>
+    <div id="alerts"></div>
+  </section>
+</main>
+
+<footer style="border-top:1px solid #e3efe6;" class="wrap">
+  <p class="fine" style="padding:16px 0;">AgriSphere · <a href="/#chat">Chat</a> · <a href="/prices.html">Prices</a> · <a href="/ussd.html">USSD demo</a> · <a href="/admin.html">Admin</a></p>
+</footer>
+
+<script>
+(function () {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const OWNER_KEY = 'agrisphere.ownerId.v1';
+  const ownerId = localStorage.getItem(OWNER_KEY) || (crypto.randomUUID && crypto.randomUUID()) || String(Date.now());
+  localStorage.setItem(OWNER_KEY, ownerId);
+  const esc = (s) => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const H = { 'Content-Type': 'application/json', 'x-owner-id': ownerId };
+
+  async function refreshStatus() {
+    try {
+      const r = await (await fetch('/api/identity/status', { headers: { 'x-owner-id': ownerId } })).json();
+      const b = $('badge');
+      b.className = r.verified ? 'badge-on' : 'badge-off';
+      b.textContent = r.verified ? '✔ Verified' + (r.phone ? ' · ' + r.phone : '') : 'Not verified yet';
+      $('otpForm').hidden = r.verified;
+    } catch (_) { $('badge').textContent = 'Account service unavailable.'; }
+  }
+  $('reqBtn').addEventListener('click', async () => {
+    const phone = $('phone').value.trim();
+    $('reqMsg').textContent = '';
+    if (!phone) { $('reqMsg').textContent = 'Enter your phone number.'; return; }
+    try {
+      const r = await (await fetch('/api/identity/otp', { method: 'POST', headers: H, body: JSON.stringify({ phone }) })).json();
+      if (r.ok) {
+        $('reqMsg').textContent = 'Code ' + (r.devOtp ? 'returned below (preview mode): ' + r.devOtp : 'sent by SMS') + '. It expires in ' + Math.round((r.ttlSeconds || 600) / 60) + ' minutes.';
+        $('codeLabel').hidden = false; $('code').hidden = false; $('verBtn').hidden = false;
+      } else { $('reqMsg').textContent = r.error || 'Could not send code.'; }
+    } catch (_) { $('reqMsg').textContent = 'Could not send code.'; }
+  });
+  $('verBtn').addEventListener('click', async () => {
+    const r = await (await fetch('/api/identity/verify', {
+      method: 'POST', headers: H,
+      body: JSON.stringify({ phone: $('phone').value.trim(), code: $('code').value.trim() }),
+    })).json();
+    $('verMsg').textContent = r.ok ? '✅ Verified! Your badge is now live.' : (r.error || 'Verification failed.');
+    if (r.ok) { refreshStatus(); loadOrg(); }
+  });
+
+  async function loadOrg() {
+    try {
+      const r = await (await fetch('/api/orgs/mine', { headers: { 'x-owner-id': ownerId } })).json();
+      if (r.org) {
+        $('orgPanel').hidden = true;
+        $('orgResult').innerHTML = '<span class="badge-on">' + (r.org.verified ? '✔ Verified organisation' : 'Organisation registered — awaiting admin verification') + '</span>' +
+          '<p style="margin-top:8px;"><strong>' + esc(r.org.name) + '</strong> · ' + esc(r.org.type) + '<br><span class="fine">' + esc(r.org.contact) + '</span></p>';
+        const a = r.assets || {};
+        $('assetsBox').hidden = false;
+        $('assets').innerHTML = '<tr><td>Programmes</td><td>' + (a.programs || 0) + '</td></tr>' +
+          '<tr><td>Marketplace listings</td><td>' + (a.listings || 0) + '</td></tr>' +
+          '<tr><td>Tourism experiences</td><td>' + (a.experiences || 0) + '</td></tr>';
+
+        // co-op workspace: members + aggregates for the leader
+        const ws = r.workspaceTotal;
+        const memBox = document.createElement('div');
+        memBox.innerHTML = (r.role === 'leader')
+          ? '<h4 style="margin-top:14px;">🤝 Co-op workspace (' + r.org.memberCount + ' member' + (r.org.memberCount === 1 ? '' : 's') + ')</h4>' +
+            (ws ? '<p class="fine">Workspace totals: ' + ws.programs + ' programmes · ' + ws.listings + ' listings · ' + ws.experiences + ' experiences</p>' : '') +
+            '<div class="mem-add" style="display:flex; gap:.5rem; margin: .4rem 0; flex-wrap:wrap;">' +
+            '<input id="memId" placeholder="Member account id (their My-account id) *" style="flex:2;" />' +
+            '<button class="btn btn-primary" id="memAddBtn" style="padding:.45rem .9rem; font-size:.85rem;">Add member</button></div>' +
+            '<div id="memList" class="fine"></div>'
+          : (r.role === 'member'
+            ? '<h4 style="margin-top:14px;">🤝 You are a member of this co-op workspace</h4><p class="fine">Your listings/applications count toward the group; contact your leader to be removed.</p>'
+            : '');
+        const assetsBox = $('assetsBox');
+        assetsBox.appendChild(memBox);
+        if (r.role === 'leader') {
+          const mlist = (r.org.members || []).map((m) =>
+            '<div style="display:flex; justify-content:space-between; padding:.2rem 0;"><span>' + esc(m.id) + ' (' + esc(m.role) + ')</span>' +
+            '<button class="del" data-rm="' + esc(m.id) + '">✕ remove</button></div>').join('');
+          $('memList').innerHTML = mlist || '<p class="fine">No members yet.</p>';
+          document.querySelectorAll('[data-rm]').forEach((b) => b.addEventListener('click', async () => {
+            await fetch('/api/orgs/' + r.org.id + '/members/' + encodeURIComponent(b.dataset.rm), { method: 'DELETE', headers: { 'x-owner-id': ownerId } });
+            loadOrg();
+          }));
+          const addBtn = $('memAddBtn');
+          if (addBtn) addBtn.addEventListener('click', async () => {
+            const mid = $('memId').value.trim();
+            if (!mid) return;
+            const rr = await (await fetch('/api/orgs/' + r.org.id + '/members', {
+              method: 'POST', headers: { 'Content-Type': 'application/json', 'x-owner-id': ownerId },
+              body: JSON.stringify({ memberId: mid, role: 'member' }),
+            })).json();
+            alert(rr.ok ? 'Member added to the workspace.' : (rr.error || 'Failed'));
+            if (rr.ok) loadOrg();
+          });
+        }
+      }
+    } catch (_) { /* not registered yet — show the form */ }
+  }
+  $('orgBtn').addEventListener('click', async () => {
+    const body = {
+      name: $('orgName').value.trim(),
+      type: $('orgType').value,
+      contact: $('orgContact').value.trim(),
+      area: $('orgArea').value.trim(),
+      description: $('orgDesc').value.trim(),
+    };
+    if (!body.name || !body.contact) { $('orgResult').textContent = 'Name and contact are required.'; return; }
+    const r = await (await fetch('/api/orgs/register', { method: 'POST', headers: H, body: JSON.stringify(body) })).json();
+    if (r.org && r.apiKey) {
+      $('apiKeyBox').hidden = false;
+      $('apiKey').textContent = r.apiKey;
+      loadOrg();
+    } else { $('orgResult').textContent = r.error || 'Registration failed.'; }
+  });
+
+  async function loadAlerts() {
+    try {
+      const d = await (await fetch('/api/alerts', { headers: { 'x-owner-id': ownerId } })).json();
+      $('alerts').innerHTML = d.alerts.length
+        ? d.alerts.map((a) => '<div class="alert-row"><span>🔔 <strong>' + esc(a.keyword) + '</strong> → ' + esc(a.channel) + (a.to ? ' (' + esc(a.to) + ')' : '') + '</span><button class="del" data-id="' + a.id + '">✕ remove</button></div>').join('')
+        : '<p class="fine">No alerts yet — subscribe on the <a href="/prices.html">Prices</a> page.</p>';
+      document.querySelectorAll('.del').forEach((b) => b.addEventListener('click', async () => {
+        await fetch('/api/alerts/' + b.dataset.id, { method: 'DELETE', headers: { 'x-owner-id': ownerId } });
+        loadAlerts();
+      }));
+    } catch (_) { $('alerts').innerHTML = '<p class="fine">Could not load alerts.</p>'; }
+  }
+
+  refreshStatus(); loadOrg(); loadAlerts();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Export readiness (geo-trace) — AgriSphere</title>
+  <meta name="description" content="AgriSphere geo-trace: record holdings with coordinates (consent-first), build consignment lot chains and export self-declared EUDR-readiness files for export chains." />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <meta name="theme-color" content="#14532d" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗺️</text></svg>" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap header-inner">
+    <a class="brand" href="/">
+      <span class="brand-logo">🌍🌱</span>
+      <span class="brand-name">AgriSphere <small>Export readiness</small></span>
+    </a>
+    <nav class="nav">
+      <a href="/market.html">🌾 Marketplace</a>
+      <a href="/programs.html">🤝 Buyer programmes</a>
+      <a href="/geotrace.html">🗺️ Geo-trace</a>
+      <a href="/account.html">👤 My account</a>
+      <a href="/#chat">Chat</a>
+    </nav>
+  </div>
+</header>
+
+<section class="hero hero-short">
+  <div class="wrap hero-grid">
+    <div class="hero-copy">
+      <p class="eyebrow">🗺️ Geo-trace &amp; export readiness · consent-first · self-declared</p>
+      <h1>Your holding, mapped to your market.</h1>
+      <p class="lede">
+        Record your holding or ranch with its coordinates (with your consent — always),
+        build the chain of holdings each export lot passed through, and download a
+        <strong>self-declared readiness file</strong> for buyer due-diligence on export chains —
+        including EU cattle/beef timelines from December 2026.
+      </p>
+      <p class="fine" id="infoLine">Loading the honest limits of this tool…</p>
+    </div>
+  </div>
+</section>
+
+<section class="chat-section">
+  <div class="wrap market-wrap">
+
+    <details class="post-card" id="holdingFormBox" open>
+      <summary class="post-summary">➕ Record a holding / ranch (your own land or managed unit)</summary>
+      <form id="holdingForm" class="post-form" autocomplete="off">
+        <div class="frow">
+          <label>Name * <input id="hName" required maxlength="90" placeholder="e.g. Molepolole Cattle Post" /></label>
+          <label>District <input id="hDistrict" maxlength="60" placeholder="e.g. Kweneng" /></label>
+          <label>Kind
+            <select id="hKind">
+              <option value="ranch">🏞️ Ranch</option>
+              <option value="farm">🌾 Farm</option>
+              <option value="feedlot">🐄 Feedlot</option>
+              <option value="pasture">🌿 Pasture</option>
+              <option value="auction">⚖️ Auction / collection point</option>
+              <option value="other">📦 Other</option>
+            </select>
+          </label>
+        </div>
+        <div class="frow">
+          <label>Latitude * <input id="hLat" type="number" step="any" required placeholder="e.g. -24.657" /></label>
+          <label>Longitude * <input id="hLng" type="number" step="any" required placeholder="e.g. 25.908" /></label>
+        </div>
+        <label>Notes (optional)
+          <textarea id="hNotes" rows="2" maxlength="300" placeholder="e.g. grazing camp A &amp; B; registered brand XYZ"></textarea>
+        </label>
+        <label class="fine" style="display:block; margin:.4rem 0;">
+          <input type="checkbox" id="hConsent" required />
+          I consent to AgriSphere storing this holding's coordinates and sharing them only with accounts I explicitly name (co-op / buyer / exporter). Revocable any time. *
+        </label>
+        <div class="frow frow-actions">
+          <p class="fine">One holding = one set of coordinates. If animals move between camps/feedlots, record each place and link them later in a consignment chain.</p>
+          <button class="btn btn-primary" type="submit">Save holding</button>
+        </div>
+        <p id="holdingMsg" class="post-msg" role="status"></p>
+      </form>
+    </details>
+
+    <div id="holdingsBox" aria-live="polite">
+      <p class="loading">Loading your holdings…</p>
+    </div>
+
+    <details class="post-card" id="consignmentFormBox">
+      <summary class="post-summary">➕ Create an export consignment (the lot you will ship)</summary>
+      <form id="consignmentForm" class="post-form" autocomplete="off">
+        <div class="frow">
+          <label>Title * <input id="cTitle" required maxlength="120" placeholder="e.g. 2026 winter export — steers to EU buyer" /></label>
+          <label>Buyer <input id="cBuyer" maxlength="90" placeholder="e.g. Export abattoir / importer name" /></label>
+          <label>Destination market <input id="cDest" maxlength="60" placeholder="EU" value="EU" /></label>
+        </div>
+        <div class="frow">
+          <label>Species
+            <select id="cSpecies">
+              <option value="cattle">🐄 Cattle</option>
+              <option value="smallstock">🐐 Smallstock</option>
+              <option value="other">📦 Other</option>
+            </select>
+          </label>
+          <label>Programme link (optional)
+            <input id="cProgramme" maxlength="80" placeholder="Buyer programme id if applicable" />
+          </label>
+        </div>
+        <div class="frow frow-actions">
+          <p class="fine">The consignment stays a draft until you add at least one lot with its holding chain.</p>
+          <button class="btn btn-primary" type="submit">Create consignment</button>
+        </div>
+        <p id="consignmentMsg" class="post-msg" role="status"></p>
+      </form>
+    </details>
+
+    <div id="consignmentsBox" aria-live="polite">
+      <p class="loading">Loading your consignments…</p>
+    </div>
+
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <p>🗺️ <strong>AgriSphere Geo-trace</strong> — documentation support for export chains. We never certify, never assess legality, and never share your coordinates without your consent.</p>
+    <p class="fine"><a href="/">← Back to the AgriSphere chat</a> · <a href="/trust">Trust &amp; honesty page</a> · <a href="/api/geotrace/info">/api/geotrace/info</a> (JSON reference)</p>
+  </div>
+</footer>
+
+<script>
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
+</script>
+<script src="/geotrace.js"></script>
+</body>
+</html>

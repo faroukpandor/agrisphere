@@ -1,0 +1,9 @@
+# TEMPLATE ONLY — replace with the real official bulletin before loading.
+# Every data row here is a commented example and will be IGNORED by the
+# loader. Copy this file to bamb-YYYY-MM-DD.csv, delete the '#', and fill in
+# the REAL figures from the official BAMB bulletin, with its date and URL.
+# Never invent prices. See README.md in this folder.
+item,unit,price,area,date,source,url
+# white maize,per 50kg bag,"P190-P210",Gaborone depot,2026-09-02,BAMB official depot bulletin,https://example.invalid/bamb/2026-09-02
+# sorghum (mabele),per 50kg bag,"P230-P250",Francistown depot,2026-09-02,BAMB official depot bulletin,https://example.invalid/bamb/2026-09-02
+# cowpeas,per 50kg bag,"P300-P330",Selebi-Phikwe depot,2026-09-02,BAMB official depot bulletin,https://example.invalid/bamb/2026-09-02

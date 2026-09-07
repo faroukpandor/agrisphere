@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+
+# Runtime data (self-learning state lives here; it is regenerated at runtime)
+data/*.json
+!data/.gitkeep
+
+# Logs / OS noise
+*.log
+.DS_Store
+.env
+.env.*
+# smoke-test runtime dirs
+.smoke-data*/
+
+# Runtime data dirs (json or sqlite state, regenerated at runtime)
+.data/
+.smoke-data/
+*.sqlite
+*.sqlite-journal
+data/uploads/
+
+# scratch runtime data dirs
+.gt-data/
+.db-data/
+.dbg-data/
+
+# auto-backup snapshots are runtime state, never repository content
+/var/data/
+data/backups/

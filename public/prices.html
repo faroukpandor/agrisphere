@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Prices — AgriSphere Official Reference Board</title>
+  <meta name="description" content="AgriSphere official price reference board: BAMB depot bulletins and other authoritative sources only. Never invented prices." />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <meta name="theme-color" content="#14532d" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💰</text></svg>" />
+  <link rel="stylesheet" href="/styles.css" />
+  <style>
+    .board { margin-top: 24px; display: grid; gap: 10px; }
+    .pref-row { background: #fff; border: 1px solid #e3efe6; border-radius: 12px; padding: .8rem 1rem; display: flex; justify-content: space-between; gap: 12px; align-items: baseline; flex-wrap: wrap; }
+    .pref-item { font-weight: 700; color: var(--green-900); }
+    .pref-price { color: var(--ink); font-weight: 800; }
+    .pref-meta { font-size: .8rem; color: var(--muted); }
+    .pill { display: inline-block; background: var(--green-100); color: var(--green-900); border-radius: 999px; padding: .15rem .6rem; font-size: .78rem; font-weight: 700; }
+    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-top: 10px; }
+    input, select { padding: .55rem .7rem; border: 1px solid #cfe0d3; border-radius: 10px; font-size: .92rem; width: 100%; background: #fff; }
+    .btn { cursor: pointer; border: 0; }
+    .box { background: #fff; border: 1px solid #e3efe6; border-radius: var(--radius); padding: 1.3rem; margin-top: 18px; box-shadow: var(--shadow); }
+    .fine { color: var(--muted); font-size: .85rem; }
+  </style>
+</head>
+<body>
+<header class="site-header">
+  <div class="wrap header-inner">
+    <a class="brand" href="/">
+      <span class="brand-logo">🌍🌱</span>
+      <span class="brand-name">AgriSphere <small>Prices</small></span>
+    </a>
+    <nav class="nav">
+      <a href="/prices.html">💰 Prices</a>
+      <a href="/market.html">🌾 Marketplace</a>
+      <a href="/programs.html">🤝 Buyer programmes</a>
+      <a href="/account.html">👤 My account</a>
+      <a href="/#chat">Chat</a>
+      <a class="nav-gh" href="https://github.com/faroukpandor/agrisphere" target="_blank" rel="noopener">GitHub ↗</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap" style="padding: 34px 20px 60px;">
+  <p class="eyebrow">💰 Honesty rule: no invented prices</p>
+  <h1>Official price reference board</h1>
+  <p>Every figure here comes from an <strong>authoritative published source</strong> (BAMB depot bulletins, BMC schedules, ministry market reports) and carries its source, date and area. Prices move weekly and by depot — always confirm before you sell. The bot answers “latest prices” from this board only.</p>
+
+  <div style="display:flex; gap:10px; align-items:center; margin-top:18px; flex-wrap:wrap;">
+    <input id="q" placeholder="Filter: maize, groundnuts, cattle…" style="max-width:320px;" />
+    <span id="count" class="pill">loading…</span>
+  </div>
+  <div id="board" class="board"></div>
+
+  <div class="box">
+    <h3>🔔 Price alerts to your phone</h3>
+    <p class="fine">Subscribe a keyword (e.g. <em>maize</em>, <em>groundnuts</em>) and when an admin loads a matching official reference you get pinged. No spam — only your chosen keywords. SMS needs a provider; preview logs the alert instead.</p>
+    <div class="form-grid">
+      <input id="kw" placeholder="Keyword * (e.g. maize)" />
+      <input id="phone" placeholder="Phone: +267 71 234 567" />
+      <select id="channel">
+        <option value="whatsapp">WhatsApp</option>
+        <option value="sms">SMS</option>
+        <option value="telegram">Telegram</option>
+        <option value="email">Email</option>
+      </select>
+      <button class="btn btn-primary" id="subBtn">Subscribe</button>
+    </div>
+    <p id="alertMsg" class="fine" style="margin-top:8px;"></p>
+  </div>
+
+  <p class="fine" style="margin-top:22px;">
+    🛡️ Admins load bulletins on the <a href="/admin.html">admin console</a> with source + date. Boards show the latest reference per item, newest first. Suspicious numbers? Challenge them in chat — nothing here is AI-generated.
+  </p>
+</main>
+
+<footer style="border-top:1px solid #e3efe6;" class="wrap">
+  <p class="fine" style="padding:16px 0;">AgriSphere · <a href="/#chat">Chat</a> · <a href="/account.html">My account</a> · <a href="/ussd.html">USSD demo</a> · <a href="/admin.html">Admin</a></p>
+</footer>
+
+<script>
+(function () {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const OWNER_KEY = 'agrisphere.ownerId.v1';
+  const ownerId = localStorage.getItem(OWNER_KEY) || (crypto.randomUUID && crypto.randomUUID()) || String(Date.now());
+  localStorage.setItem(OWNER_KEY, ownerId);
+  const esc = (s) => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+  async function load() {
+    try {
+      const q = $('q').value.trim();
+      const r = await fetch('/api/prices/references' + (q ? '?item=' + encodeURIComponent(q) : ''));
+      const d = await r.json();
+      $('count').textContent = d.latest.length + ' item' + (d.latest.length === 1 ? '' : 's');
+      $('board').innerHTML = d.latest.length
+        ? d.latest.map((p) =>
+            '<div class="pref-row"><div><span class="pref-item">' + esc(p.item) + '</span> ' +
+            (p.unit ? '<span class="pill">' + esc(p.unit) + '</span>' : '') +
+            '<div class="pref-meta">' + esc(p.source) + (p.area && p.area !== 'Botswana' ? ' · ' + esc(p.area) : '') + ' · ' + esc(p.date) + '</div></div>' +
+            '<div style="text-align:right;"><span class="pref-price">' + esc(p.price) + '</span></div></div>').join('')
+        : '<p class="loading">No official references loaded yet. Ask an admin to add the latest bulletin, or ask the bot for guidance on where to check prices.</p>';
+    } catch (_) { $('board').innerHTML = '<p class="loading">Board unavailable.</p>'; }
+  }
+  $('q').addEventListener('input', load);
+
+  $('subBtn').addEventListener('click', async () => {
+    const kw = $('kw').value.trim();
+    const phone = $('phone').value.trim();
+    $('alertMsg').textContent = '';
+    if (!kw) { $('alertMsg').textContent = 'Please enter a keyword.'; return; }
+    try {
+      const r = await fetch('/api/alerts/subscribe', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ownerId, keyword: kw, channel: $('channel').value, phone: phone || undefined }),
+      });
+      const d = await r.json();
+      $('alertMsg').textContent = d.alert ? '✅ Subscribed to "' + d.alert.keyword + '" via ' + d.alert.channel + '.' : (d.error || 'Could not subscribe.');
+    } catch (_) { $('alertMsg').textContent = 'Could not subscribe — is the server up?'; }
+  });
+
+  load();
+})();
+</script>
+</body>
+</html>

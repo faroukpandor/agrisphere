@@ -19,3 +19,8 @@ data/*.json
 *.sqlite
 *.sqlite-journal
 data/uploads/
+
+# scratch runtime data dirs
+.gt-data/
+.db-data/
+.dbg-data/

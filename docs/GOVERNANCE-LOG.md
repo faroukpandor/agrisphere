@@ -103,3 +103,43 @@ signature.
 
 **Due next (owner):** entity registration; one-pager to PDF; week-1
 outreach sends; first demo slot; deploy per DEPLOY-RUNBOOK.
+
+## 2026-09-07 — "Generate all" close-out: remaining collective artefacts
+
+**Scope (completes the generatable set of STRATEGY §§8–9 + COMPLIANCE §11 +
+AUDIT §11):**
+- Templates (docs/templates/, all "professional review required", universal
+  non-confessional language): PILOT-LOI-AGREEMENT (tracks A/B/C, decision
+  point, no-exclusivity, honesty clause); ADVANCE-PURCHASE-GROUP-CONTRACT
+  (interest-free advance on defined goods, transparent formula, fair
+  failure triggers, documentation-layer-only framing);
+  ROTATING-SAVINGS-GROUP-RULES (member-run mutual pool, closed membership,
+  regulatory boundaries spelled out); REPUBLICATION-AGREEMENT (short form
+  for BAMB bulletins & official content: attribution, no alteration, free,
+  revocable).
+- WhatsApp test-number launch checklist (docs/WHATSAPP-LAUNCH-CHECKLIST.md):
+  Meta portfolio/app/test number steps, env var mapping, webhook
+  verification, end-to-end test, message-template rules, demo-day script,
+  test-number limits, production-number path, official-docs-first rule.
+- Grants & programme capital pack (docs/GRANTS-2026-PREP.md): window
+  classes to scan quarterly (verify-before-apply), evidence-pack map,
+  standard proposal skeleton, budget skeleton, per-window checklist,
+  parastatal service-contract track, honesty rules for proposals.
+- Day-one seeding: docs/SEEDING-DAY-ONE.md (first-load order) +
+  scripts/load-prices.js + scripts/bulletins/ (README + commented
+  template CSV). Loader verified end-to-end on a live instance: official
+  rows load, commented rows never load, invalid rows rejected with
+  reasons, re-runs skip already-loaded rows (no duplicates), exit codes
+  honest.
+
+**Verification:** loader tested twice against a fresh server (2 loaded /
+re-run 0 loaded + 2 dup-skipped / board total 2); node --check clean;
+smoke suite 167/167; preview health 200.
+
+**Decision recorded:** no placeholder data ever ships to a public page;
+the template CSV's example rows are commented out by design and the loader
+skips '#' lines — first live load requires a real official bulletin.
+
+**Due next (owner):** real bulletin load on first deploy; WhatsApp
+test-number activation; LOI sends; grant-window scan on the quarterly
+cadence.

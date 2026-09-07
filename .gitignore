@@ -24,3 +24,7 @@ data/uploads/
 .gt-data/
 .db-data/
 .dbg-data/
+
+# auto-backup snapshots are runtime state, never repository content
+/var/data/
+data/backups/

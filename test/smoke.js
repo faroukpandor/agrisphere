@@ -42,6 +42,16 @@ async function chat(message, name) {
   const health = await (await fetch(`${base}/healthz`)).json();
   check('healthz ok', health.status === 'ok');
 
+  // 1b. geo-trace UI (W1 demo page) + its client script served
+  const geoPage = await fetch(`${base}/geotrace.html`);
+  const geoPageText = await geoPage.text();
+  check('geo-trace UI page served', geoPage.status === 200 && geoPageText.includes('consent'));
+  const geoJs = await fetch(`${base}/geotrace.js`);
+  const geoJsText = await geoJs.text();
+  check('geo-trace client script served', geoJs.status === 200 && geoJsText.includes('/api/geotrace/holdings'));
+  const indexNav = await (await fetch(`${base}/`)).text();
+  check('geo-trace linked from home nav', indexNav.includes('/geotrace.html'));
+
   // 2. static UI served
   const ui = await fetch(`${base}/`);
   const uiText = await ui.text();

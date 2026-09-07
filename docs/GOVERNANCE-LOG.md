@@ -69,3 +69,37 @@ O1–O6, E1–E6 recorded — this log's parent entries trace their resolution.
       funding landscape)
 - [ ] Off-site backup verified
 - [ ] `/trust` numbers reviewed by a second person
+
+## 2026-09-07 — W1 demo UI + pilot outreach pack + DPA template
+
+**Scope (STRATEGY §9 Day 1–30 execution, code + business documents):**
+- Geo-trace workspace UI shipped: `/geotrace.html` (+ `/geotrace.js`) —
+  consent-checkbox holding form, holdings list with revocable sharing
+  editor, consignment creation, lot builder with multi-holding chain rows
+  (date-ordered, open periods auto-close server-side), JSON/CSV export
+  downloads, honest info line with the EUDR deadlines and limits. Nav link
+  added to the home page ("🗺️ Export-ready").
+- `docs/OFFER-EUDR-READINESS-2026.md`: one-page pilot offer for export
+  chains — calendar, what the tool does/does not do, 90-day pilot terms,
+  price envelope placeholder, success measure = lots exported with complete
+  chains (not registration vanity metrics).
+- `docs/PILOT-OUTREACH-2026.md`: three role-based conversation cards
+  (export chain, co-op/union, insurer/BAMB), outreach sequence, BAMB
+  republication permission letter draft, MoA/Temo Letlotlo complement
+  briefing, open-item checklist for the owner, 60-second demo script.
+- `docs/templates/DATA-PROCESSING-AGREEMENT.md`: DPA template (universal
+  language, professional review required); COMPLIANCE §6 + §10 and AUDIT
+  §11 pointers updated (data governance 6.5 → 9.5/10).
+- Smoke suite extended 164 → **167 assertions, exit 0** (geo-trace UI page,
+  client script, home-nav link).
+
+**Verification:** live preview serves `/geotrace.html` (200) with the new
+build; full suite green; static assets need no server restart.
+
+**Decision recorded:** owner completes the [owner:] fields in
+OFFER/PILOT-OUTREACH docs and the open-item checklist before any external
+send-out; lawyer review of the five templates is a hard gate before
+signature.
+
+**Due next (owner):** entity registration; one-pager to PDF; week-1
+outreach sends; first demo slot; deploy per DEPLOY-RUNBOOK.

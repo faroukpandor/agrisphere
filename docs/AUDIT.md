@@ -230,8 +230,9 @@ Decisions & dates: `docs/GOVERNANCE-LOG.md`.*
   runbook exist; the remaining points sit with the operator (paid plan live,
   durability test on the real instance, off-site backup discipline) and with
   scaling design (single-instance by intent).
-- Data governance: **6.5 → 9/10** — export/erase shipped and tested; the
-  residual point is the DPA + entity [operator].
+- Data governance: **6.5 → 9.5/10** — export/erase shipped and tested; DPA
+  template now in-repo (`docs/templates/DATA-PROCESSING-AGREEMENT.md`);
+  residual point is entity registration + professional review [operator].
 - Security: **8/10 → 8.5/10** — headers + prod-only surface lock-down added;
   no external pentest yet (recurring item, unchanged).
 

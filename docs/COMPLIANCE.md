@@ -95,15 +95,16 @@ and relies on flag/feedback moderation — operators may flip on approval mode.
 - A `COMPLIANCE` and `emergency` trigger are always one question away.
 - Maintainer contact + issue tracker are public for dispute/error reporting.
 
-## 6. Privacy & data (short version — see repo issues for a full DPA template)
+## 6. Privacy & data (short version — full DPA template: `docs/templates/DATA-PROCESSING-AGREEMENT.md`, requires professional review)
 
 1. We store only what the feature needs: session history (context), taught lessons, feedback,
    unanswered questions, anonymous stats.
 2. We **never sell, rent or share personal data**; no ads; no third-party trackers on the web UI.
 3. Marketplace listings show only what the poster chooses to publish (contact = their own input).
 4. Admin endpoints require tokens; Telegram/WhatsApp secrets are env-var only.
-5. Users may request deletion of their session/lessons by opening a GitHub issue or using the
-   admin endpoint; we honour deletion within 30 days.
+5. Users can export (`GET /api/me/export`) or delete (`DELETE /api/me`) their own data
+   self-service; deletion is immediate, removes stored photo files, and is honoured for
+   admin-assisted requests within 30 days.
 6. Optional LLM mode sends only the current question + retrieved knowledge to the provider;
    operators must disclose this in their privacy notice and may disable it entirely
    (`ENABLE_LLM=false`).
@@ -147,9 +148,9 @@ no ads distorting advice**; sponsored topics are labelled; API licensing funds f
 3. Competitor framing stays factual (static PDF vs living process) — no disparagement.
 
 ## 10. Template documents
-See `docs/templates/`: OFFTake-Programme-MOU, Tourism-Listing-Agreement, Service-Level-Agreement
-(Licensed Deployment & API), Starter-Premium-Terms. All are templates requiring professional
-review before execution.
+See `docs/templates/`: OFFTake-Programme-MOU, Tourism-Listing-Agreement,
+Service-Level-Agreement (Licensed Deployment & API), Starter-Premium-Terms, and
+Data-Processing-Agreement. All are templates requiring professional review before execution.
 
 ## 11. Standards & practice appendix — 2026 refresh (deep-research revision)
 

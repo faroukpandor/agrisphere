@@ -40,7 +40,7 @@ Each topic lists the authoritative/peer-reviewed-style sources it is grounded in
 (FAO, CABI, WOAH, Codex, GlobalG.A.P., IPCC, Ramsar, IUCN, One Health, CCARDESA, national
 extension & veterinary services). See **docs/COMPLIANCE.md** for the full framework,
 **docs/MONETISATION.md** for the ethical income model,
-**docs/RESEARCH.md** for the global market intelligence, **docs/RESEARCH-2026-REFRESH.md** for the 2026 stakeholder/market refresh (EUDR, Temo Letlotlo, competitive landscape), **docs/STRATEGY.md** for the remodelling roadmap, **docs/AUDIT.md** for the enterprise & application audit, and **docs/COMPLIANCE.md §11** for the standards refresh, **docs/DEPLOY-RUNBOOK.md** for the deploy procedures, and **docs/GOVERNANCE-LOG.md** for decisions & review cadence. A public trust page with live engine facts is served at `/trust`.
+**docs/RESEARCH.md** for the global market intelligence, **docs/RESEARCH-2026-REFRESH.md** for the 2026 stakeholder/market refresh (EUDR, Temo Letlotlo, competitive landscape), **docs/STRATEGY.md** for the remodelling roadmap, **docs/AUDIT.md** for the enterprise & application audit, and **docs/COMPLIANCE.md §11** for the standards refresh, **docs/DEPLOY-RUNBOOK.md** for the deploy procedures, and **docs/GOVERNANCE-LOG.md** for decisions & review cadence, **docs/OFFER-EUDR-READINESS-2026.md** for the export-readiness pilot offer, and **docs/PILOT-OUTREACH-2026.md** for the pilot outreach pack (letters, LOI sheets, demo script). A public trust page with live engine facts is served at `/trust`, and the geo-trace (export-readiness) workspace is at `/geotrace.html`.
 
 ---
 

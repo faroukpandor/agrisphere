@@ -150,3 +150,43 @@ no ads distorting advice**; sponsored topics are labelled; API licensing funds f
 See `docs/templates/`: OFFTake-Programme-MOU, Tourism-Listing-Agreement, Service-Level-Agreement
 (Licensed Deployment & API), Starter-Premium-Terms. All are templates requiring professional
 review before execution.
+
+## 11. Standards & practice appendix — 2026 refresh (deep-research revision)
+
+Supersedes dated references in §2 where the standards bodies have moved. Full source
+library and implications: `docs/RESEARCH-2026-REFRESH.md`.
+
+| Standard / scheme | Status (2026) | AgriSphere posture |
+|---|---|---|
+| GlobalG.A.P. IFA v6 | Fruit/veg & aquaculture audited to v6 since 1 Jan 2025 (GFSI-recognised); PPM/CC v6 replaces v5.2 from 1 May 2026; aquaculture HACCP must be accredited third-party Codex-based | Readiness packs & teaching cite **v6-era** checkpoints; certification remains with accredited certification bodies |
+| EUDR (EU 2023/1115 as amended by 2025/2650) | Cattle/beef in scope from **30 Dec 2026** (large/medium) and 30 Jun 2027 (micro/small); geolocation of all holdings birth→slaughter; due-diligence statements in TRACES NT; aggregators/co-ops preserve plot-level origin | New **geo-trace readiness** checklist row (EX1) in compliance packs; self-declared documentation only — legality/deforestation assessment is for operators & competent authorities |
+| WOAH Terrestrial Code | Rolling annual updates | Teaching & welfare checklist stay WOAH-aligned; vet sign-off for clinical matters |
+| Codex Alimentarius | HACCP/food-hygiene baseline | FS1–FS4 rows in the standard checklist; certification via accredited bodies |
+| GFSI-benchmarked schemes (BRCGS etc.) | BMC Lobatse holds BRCGS Grade AA (2025); Maun halal-certified | EX2 row: buyer-required market-access certification readiness; audits only via accredited certifiers |
+| Market-access certification for faith-sensitive markets (Gulf/Asia orders) | Treated by Botswana's own industry analysis as a market-access instrument (e.g. National Independent Halal Trust audits for BMC UAE/GCC exports) | Framed non-confessionally as an export-market standard; AgriSphere never provides religious content or Arabic branding in product copy — certifiers are accredited third parties |
+| Index insurance (Pula-type PPPs) | Bayer × Pula Foundation: €10M targeting 10M farmers by 2030; satellite/weather triggers | AgriSphere educates, documents evidence kits and aggregates groups — never underwrites |
+| Customer protection & data | CGAP / GSMA mobile-money-style protection principles; UNGP business & human rights | Opt-out honoured end-to-end (chat + alert bus); insights are aggregate-only; per-user export/delete is roadmap P1 |
+| Land & tenure | FAO VGGT | Unchanged (§2) |
+| Climate/environment | FAO SAFA-style sustainability thinking | Content already covers NRM & adaptation; no carbon claims made |
+
+### Universal (Islamic-derived) practice map — non-religious, no Arabic, substance only
+AgriSphere's finance & ethics guidance implements the substance of Islamic best practice
+through universal equivalents, with no religious content, no Arabic terminology and no
+confessional framing, per the standing product constraint:
+
+| Substance (Islamic best practice) | Universal implementation in AgriSphere |
+|---|---|
+| No interest (fixed interest prohibition) | "Interest-free finance": cost-plus at an agreed transparent margin, profit/loss-sharing partnerships, and price-linked deferred payment documented in plain language — never compounding penalties |
+| Risk-sharing over debt-transfer | Equity-like partnerships and **mutual risk pools** (documented via licensed insurers), co-op group risk-sharing |
+| Trade on real goods & services (no money-on-money) | Every financing discussion is anchored to a real asset/order: advance-purchase of defined produce with specs & delivery date; asset leasing; no speculative instruments |
+| Certainty & full disclosure (no excessive uncertainty/gambling) | The fair-terms gate (written price formula, deductions, advance/input terms, payment timeline, written contract) and transparency rules in prices & programmes |
+| Honest weights, measures & trade | Verified-scale/grade documentation in deliveries, dispute trail, ratings honesty rules |
+| Stewardship of others' property/data | Consent-first OTP, per-channel opt-out, aggregate-only insights, never selling user data |
+| Community solidarity & reinvestment | Optional "community dividend" (e.g. 5% of net surplus to farmer education — STRATEGY §4.2); co-op/union aggregation as first-class citizens |
+| No exploitation of hardship | No unlicensed lending, no in-house money handling, escalation to extension/vet, report-any-buyer guardrails |
+
+### Re-certified guardrails after this refresh
+1. Nothing in the EUDR/export or market-access additions implies AgriSphere certification authority — all certs stay with accredited bodies; packs are readiness documents.
+2. Halal-type market certification appears only as a buyer-required export standard; the product's language stays universal and non-confessional (no Arabic in copy).
+3. Insurance/credit content remains advisory + partner-gated; AgriSphere never underwrites or lends.
+4. New compliance rows EX1/EX2 are optional, self-assessed and clearly scoped ("where exporting", "buyer-required").

@@ -20,6 +20,9 @@ const STANDARD_CHECKLIST = [
   { code: 'EN1', label: 'Records kept of treatments applied (what/when/dose)', std: 'Environmental & record keeping' },
   { code: 'WL1', label: 'Animal handling humane (space, water, calm handling) — livestock only', std: 'WOAH welfare' },
   { code: 'Q1', label: 'Graded against the buyer specs in the programme', std: 'Quality management' },
+  // Export-readiness (where the buyer sells into regulated markets):
+  { code: 'EX1', label: 'Geolocation recorded for holding/ranch and linked to each export lot (EU deforestation due-diligence readiness for cattle/beef chains)', std: 'EUDR (EU) 2023/1115 & (EU) 2025/2650 — applies from Dec 2026' },
+  { code: 'EX2', label: 'Optional, buyer-required: certification-readiness for faith-sensitive export markets (Gulf/Asia orders) and food-safety schemes (e.g. BRCGS) — audits only via accredited certifiers', std: 'Market-access certification (accredited bodies)' },
 ];
 
 function buildPack({ program, producer, deliveries, notes }) {

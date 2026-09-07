@@ -155,3 +155,37 @@
 - Enterprise items (E1, E6) require legal/business confirmation by the owner — marked ☑️.
 
 *Prepared as the collective audit record for AgriSphere. Next review: on first Render deployment of this branch, or 30 days from this date, whichever comes first.*
+
+---
+
+## 10. Revision 2 — deep-research-based recommendation revision (2026-09-07)
+
+*Deep research across all key stakeholders and markets was completed
+(`docs/RESEARCH-2026-REFRESH.md`) and the collective recommendations below supersede §8
+where they conflict. Compliance mapping updates: `docs/COMPLIANCE.md §11`. Strategy
+updates: `docs/STRATEGY.md §§8–9`.*
+
+### 10.1 What the research changed
+| Prior advice (§8) | Revised advice | Driver (evidence) |
+|---|---|---|
+| Next paid wedge: org licences / featured programmes (generic) | **First premium wedge: EUDR geo-trace & export-readiness for the cattle/beef chain** (plus certified-chain readiness, insurance evidence kits) | EUDR applies 30 Dec 2026 to Botswana EU beef; geolocation per holding birth→slaughter; aggregators/co-ops keep plot-level origin |
+| 90-day plan begins with entity + 3 pilot LOIs (buyer/co-op/NGO) | Same discipline, **re-ordered targets: export-chain, co-op/union, insurer-or-NGO**; add BAMB/MIRA/Temo Letlotlo complement track | Botswana policy is digitising (Temo Letlotlo automated system, MIRA, parastatal coordination); halal/BRCGS diversification active at BMC |
+| Content/standards references are "GlobalG.A.P.-style" | **Cite IFA v6-era specifics** (v6 mandatory for F&V/aquaculture since Jan 2025; PPM/CC v6 from May 2026) | GLOBALG.A.P. transition notices |
+| Grants = one of several capital options | **Grants + government/parastatal service contracts = the realistic capital path**; equity effectively unavailable | Africa agritech funding ~US$168M in 2025 vs US$776M peak; DFI-anchored rounds |
+| Farmer.Chat noted as aspirational benchmark | **Adopt UX signals (voice, photo, local language) but differentiate on deterministic-first honesty + commerce/compliance + SADC nativity**; publish accuracy/trust metrics | Farmer.Chat ~1M users, ~75% accuracy, no SADC/commerce layer |
+| Measure registrations | **Measure engaged producers & completed documents/deals** | DigiFarm: ~1M registered, ~4% active; credit drove engagement |
+| Photo queue = human review (defensive) | **Upgrade to evidence kits (timestamped geo/planting/photo) sold to licensed index-insurers**; still never AI-diagnose | Pula×Bayer €10M/10M-farmer programme needs low-cost education + claims evidence |
+
+### 10.2 Revised do-now list (supersedes §8 "do now" where overlapping)
+1. **Add the geo-trace data model + per-consignment EUDR-readiness export** (STRATEGY W1) — highest-value code item this quarter.
+2. Re-run the deploy decision (O1) *unchanged and urgent* — durable data before any public launch.
+3. Publish `/trust` page with engine/accuracy/moderation facts; keep photo→human queue honest.
+4. Voice-note in/out (Setswana v1) to match multimodal expectations without hallucination risk.
+5. Data-dignity completion (export/delete endpoints), CI test job, governance log — unchanged from §8.
+6. Compliance checklist now carries EX1/EX2 export rows (live in code as of this revision).
+
+### 10.3 New risk entries from the research
+- **EUDR deadline slippage/fit risk:** Botswana's EPA/benchmarking status may change the burden — monitor EC implementing acts quarterly (see RESEARCH-2026-REFRESH §1.4).
+- **Subsidised-competitor entry into SADC** (Farmer.Chat-type via NGO windows): mitigate with nativity, commerce/compliance moat, and trust metrics — do not compete on free-AI spend.
+- **Grant dependency risk:** if W5 conversations stall, Y1 revenue leans on W1/W2; keep the pilot pipeline at ≥3 parallel conversations.
+- **Parastatal politics:** BAMB/BMC/MIRA collaborations are slow and public-procurement-bound; treat as 6–12-month horizons, not quarter outcomes.

@@ -146,3 +146,87 @@ Score 1–5 vs the field (Khula!, Complete Farmer, FarmERM, mAgri, Plantix, gene
 - Merge PR #1 → deploy → begin R1 (WhatsApp test) + R3 (Setswana starter pack) + R8 (price widget).
 - Feedback from the owner on: entity registration, pilot target names, and whether to pursue the community-dividend clause.
 - Quarterly re-run of RESEARCH.md (funding numbers move fast).
+
+---
+
+## 8. Competitive repositioning — Revision 2 (2026-09-07, post deep research)
+
+Evidence: `docs/RESEARCH-2026-REFRESH.md`. Three external facts force this revision:
+(1) **EUDR applies to Botswana's EU beef chain from 30 Dec 2026** (geolocation of every
+holding, birth→slaughter, per consignment; aggregators/co-ops must preserve plot-level
+origin); (2) Farmer.Chat-type subsidised AI advisory now reaches ~1M farmers — but not in
+SADC and without a commerce/compliance layer; (3) African agritech equity collapsed to
+~US$168M in 2025 — revenue and grants, not VC, are the capital path.
+
+### 8.1 Revised positioning statement
+**"Botswana's trust layer for farm commerce and export compliance — free at the farmer
+edge, paid by buyers, exporters, insurers and programmes."** Advisory stays the free door;
+**verified commerce + export-readiness documents** become the moat. AI-independence and
+human-verified diagnosis remain hard differentiators we can evidence (deterministic core;
+photo review by people; published moderation).
+
+### 8.2 Revised product wedges (in order)
+| # | Wedge | Client | Why now | Guardrails |
+|---|---|---|---|---|
+| W1 | **Geo-trace & EUDR readiness for cattle/beef** — holding/ranch geolocation on file, movement↔batch linkage, per-consignment readiness export, DD-statement support notes | BMC, export abattoirs, ranchers & co-ops, EU importers (via buyers), MIRA | Dec-2026 deadline; Botswana's flagship export; no local SaaS offers it | Documentation only; deforestation/legal assessment stays with operators & authorities; EX1 row self-assessed |
+| W2 | **Certified-chain readiness packs** (IFA v6-era for horticulture; market-access certification readiness e.g. BRCGS / faith-sensitive Gulf orders for smallstock/poultry) | Packhouses, Tsabong-era smallstock exporters, Choppies-type buyers | Certification clocks (IFA v6 mandatory; BMC halal/BRCGS precedent) | Audits only via accredited certifiers; EX2 buyer-required |
+| W3 | **Index-insurance evidence & education kits** (planting/geo/photo records, claims evidence, group aggregation docs) | Licensed insurers, Pula-type PPPs, BAMB | Pula/Bayer 10M-farmer push; insurers need low-cost onboarding + evidence | Never underwrite; partner-gated |
+| W4 | **Co-op/union workspace as the aggregation unit** (pooled output contracts, collective bargaining, EUDR plot-level origin preservation) | BAMCU-type unions, co-ops | Explicit in Temo Letlotlo policy; EUDR needs aggregator-level data | Consent-based member records |
+| W5 | **Government/parastatal complement layer** (verified farmer profiles, records, bulletin partnership; Temo Letlotlo/MIRA/BAMB ecosystem fit) | MoA, BAMB, MIRA, SEZs | Policy digitisation + parastatal coordination announced; grants route | No subsidy capture; data stays user-owned |
+
+### 8.3 Competitive truth table (why we win honestly)
+| Dimension | Farmer.Chat-type | DigiFarm-type | AgriSphere v2 |
+|---|---|---|---|
+| Advisory | Generative AI (~75% accuracy reported), donor-subsidised | App + agents | Deterministic-first + human-verified queue; accuracy evidence published |
+| SADC/Botswana presence | None | Kenya-centric | Native (Setswana v1, BAMB/BMC/MIRA context) |
+| Commerce/contracts | None (agentic commerce roadmap) | Input+credit focus | Buyer-led programmes + fair-terms gate + lifecycle engine |
+| Compliance/export docs | None | None | Compliance packs, settlement statements, **EUDR geo-trace (new)** |
+| Identity/trust | None | M-PESA-linked | OTP verification, org/co-op verification, ratings with honesty rules |
+| Language/access | Multilingual + voice + photo | English/Swahili | English + Setswana v1; USSD for feature phones; photo-to-human |
+| Business model | Donor/OpenAI | Telecom-led, credit-driven | B2B2F: buyers/exporters/insurers/orgs pay; farmers free forever |
+
+### 8.4 Innovate-to-disrupt (next 6–12 months, code roadmap)
+1. **Geo-trace data model** — add holdings/ranches with geolocation + consent; link to
+   programme deliveries & batches; export "EUDR-ready consignment file" (points + dates +
+   movement chain) for buyer due-diligence packs. *P0 after this revision.*
+2. **Voice-note in/out on WhatsApp/Telegram** (Setswana voice v1) and photo→human queue →
+   published "answered-by-agronomist" follow-ups — matching Farmer.Chat UX without the
+   hallucination liability.
+3. **Public trust page** (`/trust`): engine facts, moderation log summaries, accuracy
+   metrics from the unanswered queue, opt-out stats — the anti-hype moat.
+4. **Co-op treasury documents**: advance-purchase group contracts, rotating-savings &
+   group-procurement documentation (universal, non-religious), mutual-pool education.
+5. **Programme-to-export pipeline**: when a programme targets an export buyer, compliance
+   pack auto-gains EX1/EX2 rows and IFA-v6/EUDR era references.
+
+### 8.5 Defer deliberately (unchanged + reasons)
+- AI photo *diagnosis* until a vet/agronomist partner validates accuracy on Botswana crops.
+- PSP/mobile-money hooks, insurance underwriting, lending — partnership-gated by law & ethics.
+- Farmer-facing paid tiers — never (B2B2F stands).
+
+---
+
+## 9. Revised 90-day owner plan — Revision 2 (supersedes §4.3 sequencing)
+
+**Days 1–30 — lock the wedge**
+1. Merge/deploy per audit ops conditions (durable data first — AUDIT §4 O1).
+2. **One-page EUDR-readiness offer** + identify 3 export-chain conversations: BMC/MIRA
+   ecosystem, one export abattoir/processor, one EU-facing buyer; use OFFTake MOU template.
+3. Add geo-trace data model + consignment-file export (code W1).
+4. WhatsApp test number demo (R1 activation) + /trust page + publish trust metrics.
+
+**Days 31–60 — revenue conversations**
+5. Sign LOIs: export-chain (W1/W2), one co-op/union (W4), one insurer or NGO (W3/W5).
+6. Register entity + bank account; scope first paid pilot price with SLA template.
+7. Approach BAMB for bulletin republication permission (R8 data rights) and MoA for
+   Temo Letlotlo complement conversation (W5).
+
+**Days 61–90 — institutionalise**
+8. Launch first paid pilot (aim: 1–2 org licences + 1 EUDR-readiness engagement by
+   day 90, per sober Y1 envelope §4.2).
+9. Grant applications (EU/FAO/UNDP digital-ag windows) using AUDIT + research evidence.
+10. Governance log entry + this revision's checklist closed out; re-run AUDIT on deploy.
+
+**Feedback still requested from owner:** entity registration, pilot target names
+(replace placeholders above), community-dividend clause decision, and BAMB/MIRA
+introductory route preference.

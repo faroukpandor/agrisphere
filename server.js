@@ -49,7 +49,10 @@ app.disable('x-powered-by');
 app.use(express.json({ limit: '4mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 // same-origin photo evidence (R18): DATA_DIR/uploads
-app.use('/uploads', express.static(path.join(config.DATA_DIR, 'uploads'), { maxAge: '7d' }));
+app.use('/uploads', express.static(path.join(config.DATA_DIR, 'uploads'), {
+  maxAge: '7d',
+  setHeaders: (res) => res.setHeader('X-Content-Type-Options', 'nosniff'),
+}));
 
 const ok = (res, data, code = 200) => res.status(code).json(data);
 const fail = (res, msg, code = 400) => res.status(code).json({ error: msg });
@@ -93,7 +96,9 @@ app.get('/healthz', (req, res) => {
 // ---------------------------------------------------------------------------
 // Web chat API
 // ---------------------------------------------------------------------------
-app.post('/api/chat', async (req, res) => {
+app.post('/api/chat',
+  rateLimit({ windowMs: 5 * 60 * 1000, max: 150, name: 'chat' }),
+  async (req, res) => {
   try {
     const { message, sessionId, name } = req.body || {};
     const sid = String(sessionId || req.headers['x-session-id'] || 'anon')
@@ -174,11 +179,50 @@ app.post('/api/teach', (req, res) => {
   ok(res, { ok: true, learned: store.listLearned().length });
 });
 
+function timingSafeEq(a, b) {
+  const ba = Buffer.from(String(a));
+  const bb = Buffer.from(String(b));
+  if (ba.length !== bb.length) return false;
+  return crypto.timingSafeEqual(ba, bb);
+}
+
+// Admin token via header only — a token in the query string would leak into
+// access logs and browser history.
 function adminGuard(req, res, next) {
   if (!config.ADMIN_TOKEN) return next();
-  const t = req.headers['x-admin-token'] || req.query.token;
-  if (t !== config.ADMIN_TOKEN) return fail(res, 'unauthorized', 403);
+  const t = req.headers['x-admin-token'];
+  if (!t || !timingSafeEq(t, config.ADMIN_TOKEN)) return fail(res, 'unauthorized', 403);
   return next();
+}
+
+// ---------------------------------------------------------------------------
+// Minimal dependency-free rate limiting (audit hardening).
+// In-memory sliding-window counters keyed per IP (+ optional body key such as
+// phone). Sufficient for a single-instance deployment; swap for a shared
+// store (Redis) when scaling horizontally.
+// ---------------------------------------------------------------------------
+const limitBuckets = new Map();
+function rateLimit({ windowMs, max, name, keyFn }) {
+  return (req, res, next) => {
+    const bucket = String(name || 'rl');
+    let k = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.ip || 'ip';
+    if (keyFn) { try { k += '|' + keyFn(req); } catch (_) {} }
+    const now = Date.now();
+    const win = Math.floor(now / windowMs);
+    const rec = limitBuckets.get(bucket) || { win, n: new Map() };
+    if (rec.win !== win) { rec.win = win; rec.n = new Map(); }
+    const n = (rec.n.get(k) || 0) + 1;
+    rec.n.set(k, n);
+    limitBuckets.set(bucket, rec);
+    if (limitBuckets.size > 64) {
+      // prune stale buckets opportunistically
+      for (const [b, r] of limitBuckets) {
+        if (Date.now() - r.win * windowMs > windowMs * 2) limitBuckets.delete(b);
+      }
+    }
+    if (n > max) return fail(res, 'too many requests — slow down and try again shortly', 429);
+    return next();
+  };
 }
 
 app.get('/api/admin/learned', adminGuard, (req, res) => {
@@ -227,7 +271,9 @@ app.delete('/api/marketplace/listings/:id', (req, res) => {
   ok(res, r);
 });
 
-app.post('/api/marketplace/listings/:id/report', (req, res) => {
+app.post('/api/marketplace/listings/:id/report',
+  rateLimit({ windowMs: 10 * 60 * 1000, max: 10, name: 'rep-listing' }),
+  (req, res) => {
   const r = marketplace.report(String(req.params.id));
   if (r.error) return fail(res, r.error);
   ok(res, r);
@@ -307,7 +353,9 @@ app.delete('/api/experiences/:id', (req, res) => {
   ok(res, r);
 });
 
-app.post('/api/experiences/:id/report', (req, res) => {
+app.post('/api/experiences/:id/report',
+  rateLimit({ windowMs: 10 * 60 * 1000, max: 10, name: 'rep-exp' }),
+  (req, res) => {
   const r = experiences.reportExperience(String(req.params.id));
   if (r.error) return fail(res, r.error);
   ok(res, r);
@@ -335,7 +383,9 @@ app.post('/api/bizplan/generate', (req, res) => {
 // ---------------------------------------------------------------------------
 // Identity & phone verification (OTP)
 // ---------------------------------------------------------------------------
-app.post('/api/identity/otp', (req, res) => {
+app.post('/api/identity/otp',
+  rateLimit({ windowMs: 15 * 60 * 1000, max: 6, name: 'otp-issue', keyFn: (req) => String((req.body || {}).phone || '') }),
+  (req, res) => {
   const phone = String((req.body || {}).phone || '').replace(/[^\d+]/g, '').slice(0, 20);
   if (!/^\+?\d{7,15}$/.test(phone)) return fail(res, 'a valid phone number is required (e.g. +267 71 234 567)');
   const r = identity.issueOtp(phone);
@@ -347,7 +397,9 @@ app.post('/api/identity/otp', (req, res) => {
   });
 });
 
-app.post('/api/identity/verify', (req, res) => {
+app.post('/api/identity/verify',
+  rateLimit({ windowMs: 15 * 60 * 1000, max: 20, name: 'otp-verify' }),
+  (req, res) => {
   const { phone, code } = req.body || {};
   const sid = String(req.headers['x-owner-id'] || '').slice(0, 80);
   const r = identity.verifyOtp(String(phone || ''), String(code || ''));
@@ -473,7 +525,9 @@ app.get('/api/alerts', (req, res) => {
   ok(res, { alerts: notify.forOwner(String(req.headers['x-owner-id'] || '')) });
 });
 
-app.post('/api/alerts/subscribe', (req, res) => {
+app.post('/api/alerts/subscribe',
+  rateLimit({ windowMs: 60 * 60 * 1000, max: 12, name: 'alert-sub' }),
+  (req, res) => {
   const b = req.body || {};
   const r = notify.subscribe({
     ownerId: b.ownerId || req.headers['x-owner-id'],
@@ -585,7 +639,9 @@ app.get('/api/insights', (req, res) => {
 // Photo capture (R18) — honest path: stored for the human review queue and
 // delivery evidence. No AI-vision claims; diagnosis needs a person.
 // ---------------------------------------------------------------------------
-app.post('/api/photos', (req, res) => {
+app.post('/api/photos',
+  rateLimit({ windowMs: 60 * 60 * 1000, max: 15, name: 'photos' }),
+  (req, res) => {
   const b = req.body || {};
   const saved = uploads.saveImage(b.image);
   if (saved.error) return fail(res, saved.error);
@@ -616,7 +672,9 @@ app.get('/api/admin/moderation', adminGuard, (req, res) => {
   ok(res, insights.moderationBundle());
 });
 
-app.post('/api/programs/:id/report', (req, res) => {
+app.post('/api/programs/:id/report',
+  rateLimit({ windowMs: 10 * 60 * 1000, max: 10, name: 'rep-prog' }),
+  (req, res) => {
   const p = store.programs.find((x) => x.id === String(req.params.id));
   if (!p) return fail(res, 'programme not found', 404);
   p.flags = (p.flags || 0) + 1;

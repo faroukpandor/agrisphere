@@ -482,6 +482,20 @@ async function chat(message, name) {
   const mod3 = await (await fetch(`${base}/api/admin/moderation`, { headers: { 'x-admin-token': 'smoke-admin' } })).json();
   check('photo in moderation queue', (mod3.photoQuestions || []).some((x) => x.image === photo.record.image));
 
+  // 28. audit hardening: admin header-only + timing-safe, rate limiter
+  const qTok = await fetch(`${base}/api/admin/learned?token=smoke-admin`);
+  check('admin query-string token rejected', qTok.status === 403);
+  const hTok = await fetch(`${base}/api/admin/learned`, { headers: { 'x-admin-token': 'smoke-admin' } });
+  check('admin header token accepted', hTok.status === 200);
+  let last = null;
+  for (let i = 0; i < 7; i++) {
+    last = await fetch(`${base}/api/identity/otp`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone: '+26770009999' }),
+    });
+  }
+  check('otp rate limit returns 429', last.status === 429);
+
   // 24. history persisted
   const hist = await (await fetch(`${base}/api/history/${sid}`)).json();
   check('history stored', Array.isArray(hist.history) && hist.history.length >= 4, `len=${hist.history.length}`);

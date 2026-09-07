@@ -95,6 +95,12 @@ async function fireOn(text, payloadLabel) {
   const fired = [];
   for (const a of store.alerts) {
     if (t.includes(a.keyword)) {
+      // data dignity: honour per-channel opt-out even for subscriptions
+      const sOpt = store.sessions[a.to];
+      if (sOpt && sOpt.channelOptOut && sOpt.channelOptOut[a.channel]) {
+        store.bump('alerts.optout-skipped');
+        continue;
+      }
       const msg = `🔔 AgriSphere alert (${payloadLabel}): ${String(text).slice(0, 220)}`;
       try {
         const r = await send({ channel: a.channel, to: a.to, text: msg });
